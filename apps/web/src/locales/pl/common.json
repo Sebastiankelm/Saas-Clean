@@ -42,6 +42,18 @@
       "title": "Gotowy na start?",
       "description": "Nasz szablon dostarcza wszystko, czego potrzebujesz, aby szybko uruchomić SaaS. Skup się na tym, co wyróżnia Twój produkt.",
       "action": "Zobacz kod"
+    },
+    "testimonials": {
+      "title": "Uwielbiany przez szybkie zespoły SaaS",
+      "description": "Posłuchaj, jak liderzy produktów przyspieszają wdrożenia z Saas Clean."
+    },
+    "faq": {
+      "title": "Najczęściej zadawane pytania",
+      "description": "Wszystko, co musisz wiedzieć przed startem."
+    },
+    "blog": {
+      "title": "Najnowsze wpisy na blogu",
+      "description": "Lekcje produktowe, informacje o wydaniach i wskazówki dotyczące wzrostu od naszego zespołu."
     }
   },
   "terminal": {

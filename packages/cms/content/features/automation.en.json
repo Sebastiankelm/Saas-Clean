@@ -1,0 +1,7 @@
+{
+  "title": "Automated billing ops",
+  "description": "Sync customer accounts, send receipts, and update CRM tools without manual busywork.",
+  "locale": "en",
+  "icon": "automation",
+  "order": 3
+}

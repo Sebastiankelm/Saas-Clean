@@ -1,0 +1,7 @@
+{
+  "title": "Zautomatyzowane operacje billingowe",
+  "description": "Synchronizuj konta klientów, wysyłaj potwierdzenia i aktualizuj CRM bez ręcznej pracy.",
+  "locale": "pl",
+  "icon": "automation",
+  "order": 3
+}

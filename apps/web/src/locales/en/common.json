@@ -42,6 +42,18 @@
       "title": "Ready to launch your SaaS?",
       "description": "Our template provides everything you need to get your SaaS up and running quickly. Don't waste time on boilerplate - focus on what makes your product unique.",
       "action": "View the code"
+    },
+    "testimonials": {
+      "title": "Loved by fast-moving SaaS teams",
+      "description": "Hear how product leaders ship faster with the Saas Clean starter."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "description": "Everything you need to know before launching."
+    },
+    "blog": {
+      "title": "Latest from the blog",
+      "description": "Product lessons, release notes, and growth tips from our team."
     }
   },
   "terminal": {

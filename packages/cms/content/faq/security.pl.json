@@ -1,0 +1,6 @@
+{
+  "question": "Czy dane klientów są bezpieczne?",
+  "answer": "Hasła przechowujemy z użyciem szyfrowania na poziomie branżowym, a kopie zapasowe wykonujemy co godzinę.",
+  "locale": "pl",
+  "order": 2
+}
