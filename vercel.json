@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd apps/web && SKIP_ENV_VALIDATION=true next build",
+  "framework": "nextjs",
+  "installCommand": "pnpm install"
+}
+
