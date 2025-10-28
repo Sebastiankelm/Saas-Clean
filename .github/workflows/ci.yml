@@ -11,7 +11,7 @@ permissions:
   checks: write
 
 jobs:
-  web:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,14 +42,23 @@ jobs:
       - name: Apply Supabase migrations
         run: supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
+      - name: Generate Supabase type definitions
+        run: pnpm supabase:typegen
+
       - name: Lint
         run: pnpm lint
 
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
-        run: pnpm test
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+      - name: E2E tests
+        run: pnpm test:e2e
 
       - name: Build
         run: pnpm build

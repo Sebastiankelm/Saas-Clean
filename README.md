@@ -16,6 +16,30 @@ This is a starter template for building a SaaS application using **Next.js** wit
 - Local middleware to protect Server Actions or validate Zod schemas
 - Activity logging system for any user events
 
+## Developer onboarding
+
+The repository now exposes a plugin contract and a richer automated test matrix. The quickest way to become productive is:
+
+1. Install dependencies with `pnpm install` and ensure the [Supabase CLI](https://supabase.com/docs/guides/cli) is available in your `PATH`.
+2. Start the local Supabase stack and apply migrations:
+   ```bash
+   supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+   supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+   ```
+3. Generate typed database bindings consumed by the API layer whenever the schema changes:
+   ```bash
+   pnpm supabase:typegen
+   ```
+4. Explore the shared plugin SDK under `packages/plugins`. The reference plugin demonstrates both the service and client contracts.
+5. Run the new test suites as required:
+   ```bash
+   pnpm test:unit        # runs unit suites for web and api
+   pnpm test:integration # runs integration suites for web and api
+   pnpm test:e2e         # runs Playwright end-to-end suites
+   ```
+
+See `apps/web/tests` and `apps/api/tests` for examples of unit, integration and Playwright-driven end-to-end tests. The ESLint rule in `packages/eslint-plugin-saas` protects shared packages from deep imports — add new exports to the respective `src/index.ts` barrel files when you expand the SDK.
+
 ## Tech Stack
 
 - **Framework**: [Next.js](https://nextjs.org/)
