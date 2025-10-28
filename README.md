@@ -18,25 +18,17 @@ This is a starter template for building a SaaS application using **Next.js** wit
 
 ## Developer onboarding
 
-The repository now exposes a plugin contract and a richer automated test matrix. The quickest way to become productive is:
+- 📘 **Quick Start:** [docs/quick-start.md](docs/quick-start.md) opisuje pełen przepływ uruchomienia Supabase, backendu API oraz frontendu Next.js na lokalnej maszynie.
+- 🔌 **Pluginy i CMS:** [docs/plugins-and-cms.md](docs/plugins-and-cms.md) wyjaśnia kontrakt wtyczek (`@saas-clean/plugins`) i proces dodawania nowych kolekcji do modułu CMS.
+- 🛟 **Troubleshooting:** w przypadku problemów z RLS, migracjami lub seedem skorzystaj z [docs/troubleshooting.md](docs/troubleshooting.md).
 
-1. Install dependencies with `pnpm install` and ensure the [Supabase CLI](https://supabase.com/docs/guides/cli) is available in your `PATH`.
-2. Start the local Supabase stack and apply migrations:
-   ```bash
-   supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
-   supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
-   ```
-3. Generate typed database bindings consumed by the API layer whenever the schema changes:
-   ```bash
-   pnpm supabase:typegen
-   ```
-4. Explore the shared plugin SDK under `packages/plugins`. The reference plugin demonstrates both the service and client contracts.
-5. Run the new test suites as required:
-   ```bash
-   pnpm test:unit        # runs unit suites for web and api
-   pnpm test:integration # runs integration suites for web and api
-   pnpm test:e2e         # runs Playwright end-to-end suites
-   ```
+Po wykonaniu kroków z Quick Start uruchom zestawy testów zgodnie z potrzebami projektu:
+
+```bash
+pnpm test:unit        # runs unit suites for web and api
+pnpm test:integration # runs integration suites for web and api
+pnpm test:e2e         # runs Playwright end-to-end suites
+```
 
 See `apps/web/tests` and `apps/api/tests` for examples of unit, integration and Playwright-driven end-to-end tests. The ESLint rule in `packages/eslint-plugin-saas` protects shared packages from deep imports — add new exports to the respective `src/index.ts` barrel files when you expand the SDK.
 
@@ -50,48 +42,14 @@ See `apps/web/tests` and `apps/api/tests` for examples of unit, integration and 
 
 ## Getting Started
 
-```bash
-git clone https://github.com/nextjs/saas-starter
-cd saas-starter
-pnpm install
-```
+Skorzystaj z [Quick Start](docs/quick-start.md), aby uruchomić lokalne środowisko. Przewodnik zawiera:
 
-## Running Locally
+- instalację zależności,
+- start i migracje Supabase,
+- seedowanie Stripe i kont użytkowników,
+- uruchomienie backendu (`pnpm --filter=@saas-clean/api dev`) oraz frontendu (`pnpm dev`).
 
-[Install](https://docs.stripe.com/stripe-cli) and log in to your Stripe account:
-
-```bash
-stripe login
-```
-
-Use the included setup script to create your `.env` file:
-
-```bash
-pnpm db:setup
-```
-
-Apply the SQL migrations in `supabase/migrations` using the [Supabase CLI](https://supabase.com/docs/guides/cli) and seed the
-database with a default user and team:
-
-```bash
-supabase db push
-pnpm db:seed
-```
-
-This will create the following user and team:
-
-- User: `test@test.com`
-- Password: `admin123`
-
-You can also create new users through the `/sign-up` route.
-
-Finally, run the Next.js development server:
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+Po zalogowaniu (domyślne dane: `test@test.com` / `admin123`) możesz tworzyć nowe konta poprzez `/sign-up`.
 
 ## Environment configuration
 
@@ -138,24 +96,25 @@ Supabase powers authentication metadata, organizations, and billing aggregates. 
 
 ### CLI workflow
 
+Skrócona lista komend znajduje się w [Quick Start](docs/quick-start.md). Poniżej podsumowanie:
+
 ```bash
 # Start the local stack (only Postgres is required for migrations/tests)
-pnpm dlx supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
 
 # Apply every SQL file in supabase/migrations to the local database
-pnpm dlx supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
 # Generate the typed client after schema changes (writes to supabase/types.ts)
-pnpm dlx supabase gen types typescript --local --schema public --project-ref saas-clean-local > supabase/types.ts
+pnpm supabase:typegen
 
 # Stop containers when you are done
-pnpm dlx supabase stop
+supabase stop
 ```
 
-Seed data lives in [`apps/web/lib/db/seed.ts`](apps/web/lib/db/seed.ts); run `pnpm --filter=@saas-clean/web db:seed` once the
-migrations succeed. GitHub Actions (`.github/workflows/ci.yml`) mirrors this workflow: the job installs the CLI, applies
-`supabase/migrations`, and only then executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` to guarantee schema
-drift is caught early.
+Seed data lives in [`apps/web/lib/db/seed.ts`](apps/web/lib/db/seed.ts); run `pnpm --filter=@saas-clean/web db:seed` once the migrations succeed. GitHub Actions (`.github/workflows/ci.yml`) mirrors this workflow: the job installs the CLI, applies `supabase/migrations`, and only then executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` to guarantee schema drift is caught early.
+
+W razie problemów z migracjami lub seedingiem sprawdź sekcję [Troubleshooting](docs/troubleshooting.md).
 
 ### Edge functions and logs
 
@@ -188,7 +147,7 @@ folders that mirror the `common.json` structure.
 
 Marketing content is stored in [`packages/cms`](packages/cms). Update `content.config.ts` to add new collections and run
 `pnpm build:cms` to generate static JSON that the web app consumes. The package is part of the workspace so edits to CMS
-content will be type-checked when you run `pnpm typecheck` or `pnpm build`.
+content will be type-checked when you run `pnpm typecheck` or `pnpm build`. Szczegółowy przewodnik dodawania kolekcji znajdziesz w [docs/plugins-and-cms.md](docs/plugins-and-cms.md).
 
 ## Testing
 
