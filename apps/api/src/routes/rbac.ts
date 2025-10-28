@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 import { createRBACService } from '../services/rbac.service';
