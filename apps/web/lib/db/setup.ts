@@ -155,6 +155,14 @@ async function getStripeSecretKey(): Promise<string> {
   return await question('Enter your Stripe Secret Key: ');
 }
 
+async function getStripePublishableKey(): Promise<string> {
+  console.log('Step 3b: Getting Stripe Publishable Key');
+  console.log(
+    'You can find your Stripe Publishable Key at: https://dashboard.stripe.com/test/apikeys'
+  );
+  return await question('Enter your Stripe Publishable Key: ');
+}
+
 async function createStripeWebhook(): Promise<string> {
   console.log('Step 4: Creating Stripe webhook...');
   try {
@@ -198,15 +206,19 @@ async function main() {
 
   const POSTGRES_URL = await getPostgresURL();
   const STRIPE_SECRET_KEY = await getStripeSecretKey();
+  const NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = await getStripePublishableKey();
   const STRIPE_WEBHOOK_SECRET = await createStripeWebhook();
   const BASE_URL = 'http://localhost:3000';
+  const FRONTEND_URL = BASE_URL;
   const AUTH_SECRET = generateAuthSecret();
 
   await writeEnvFile({
     POSTGRES_URL,
     STRIPE_SECRET_KEY,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     STRIPE_WEBHOOK_SECRET,
     BASE_URL,
+    FRONTEND_URL,
     AUTH_SECRET,
   });
 

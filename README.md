@@ -69,6 +69,38 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
+## Environment configuration
+
+The web application validates configuration via [`apps/web/config/env.ts`](apps/web/config/env.ts) using
+[`@t3-oss/env-nextjs`](https://github.com/t3-oss/t3-env). Each deployment target should provide the following keys:
+
+| Key | Description |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL. |
+| `SUPABASE_ANON_KEY` | Supabase anon key used by the frontend. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key used for privileged operations. |
+| `AUTH_SECRET` | Secret used by Better Auth (minimum 32 characters). |
+| `STRIPE_SECRET_KEY` | Stripe secret key for server-side API calls. |
+| `STRIPE_WEBHOOK_SECRET` | Secret used to validate incoming Stripe webhooks. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Publishable Stripe key exposed to the browser. |
+| `FRONTEND_URL` | Publicly accessible URL for the frontend. |
+| `BASE_URL` | Optional override used for backend callbacks; defaults to `FRONTEND_URL`. |
+| `CONTACT_EMAIL` | Email address shown in transactional copy/support flows. |
+| `I18N_DEFAULT_LOCALE` | Default locale code (e.g., `en`). |
+| `I18N_SUPPORTED_LOCALES` | Comma-separated list of supported locale codes. |
+
+Sample values for local development, staging, and production are provided in `.env.local`, `.env.staging`, and
+`.env.production`. Update the placeholders with real credentials before running the app in those environments.
+
+To keep secrets fresh, rotate them at least every 90 days using the helper script:
+
+```bash
+scripts/rotate-secrets.sh production .env.production --repo your-org/saas-clean
+```
+
+The script syncs values from the specified env file to GitHub Actions secrets and opens a reminder issue for the next
+rotation. Add the command to a calendar or automation workflow to maintain a consistent cadence.
+
 You can listen for Stripe webhooks locally through their CLI to handle subscription change events:
 
 ```bash

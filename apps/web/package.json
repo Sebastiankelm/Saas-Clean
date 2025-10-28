@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@saas-clean/ui": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.10.1",
     "@supabase/supabase-js": "^2.47.10",
     "@tailwindcss/postcss": "4.1.7",
     "autoprefixer": "^10.4.21",
