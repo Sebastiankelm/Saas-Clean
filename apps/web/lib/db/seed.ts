@@ -1,7 +1,8 @@
 import { stripe } from '../payments/stripe';
-import { db } from './drizzle';
-import { users, teams, teamMembers } from './schema';
+import { getSupabaseAdminClient } from './client';
 import { hashPassword } from '@/lib/auth/session';
+
+const supabase = getSupabaseAdminClient();
 
 async function createStripeProducts() {
   console.log('Creating Stripe products and prices...');
@@ -13,7 +14,7 @@ async function createStripeProducts() {
 
   await stripe.prices.create({
     product: baseProduct.id,
-    unit_amount: 800, // $8 in cents
+    unit_amount: 800,
     currency: 'usd',
     recurring: {
       interval: 'month',
@@ -28,7 +29,7 @@ async function createStripeProducts() {
 
   await stripe.prices.create({
     product: plusProduct.id,
-    unit_amount: 1200, // $12 in cents
+    unit_amount: 1200,
     currency: 'usd',
     recurring: {
       interval: 'month',
@@ -44,31 +45,47 @@ async function seed() {
   const password = 'admin123';
   const passwordHash = await hashPassword(password);
 
-  const [user] = await db
-    .insert(users)
-    .values([
-      {
-        email: email,
-        passwordHash: passwordHash,
-        role: "owner",
-      },
-    ])
-    .returning();
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .insert({
+      email,
+      password_hash: passwordHash,
+      role: 'owner',
+    })
+    .select('id')
+    .single();
+
+  if (userError || !user) {
+    throw userError ?? new Error('Failed to create initial user');
+  }
 
   console.log('Initial user created.');
 
-  const [team] = await db
-    .insert(teams)
-    .values({
+  const { data: team, error: teamError } = await supabase
+    .from('teams')
+    .insert({
       name: 'Test Team',
     })
-    .returning();
+    .select('id')
+    .single();
 
-  await db.insert(teamMembers).values({
-    teamId: team.id,
-    userId: user.id,
-    role: 'owner',
-  });
+  if (teamError || !team) {
+    throw teamError ?? new Error('Failed to create initial team');
+  }
+
+  const { error: membershipError } = await supabase
+    .from('team_members')
+    .insert({
+      team_id: team.id,
+      user_id: user.id,
+      role: 'owner',
+    });
+
+  if (membershipError) {
+    throw membershipError;
+  }
+
+  await supabase.rpc('refresh_team_views');
 
   await createStripeProducts();
 }

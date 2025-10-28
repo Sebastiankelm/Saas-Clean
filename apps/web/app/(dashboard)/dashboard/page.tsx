@@ -50,15 +50,15 @@ function ManageSubscription() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="mb-4 sm:mb-0">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+           <div className="mb-4 sm:mb-0">
               <p className="font-medium">
-                Current Plan: {teamData?.planName || 'Free'}
+                Current Plan: {teamData?.billingSummary?.plan_name || 'Free'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {teamData?.subscriptionStatus === 'active'
+                {teamData?.billingSummary?.subscription_status === 'active'
                   ? 'Billed monthly'
-                  : teamData?.subscriptionStatus === 'trialing'
+                  : teamData?.billingSummary?.subscription_status === 'trialing'
                   ? 'Trial period'
                   : 'No active subscription'}
               </p>

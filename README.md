@@ -19,8 +19,8 @@ This is a starter template for building a SaaS application using **Next.js** wit
 ## Tech Stack
 
 - **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
+- **Database**: [Postgres](https://www.postgresql.org/) managed by [Supabase](https://supabase.com/)
+- **Data Access**: [Supabase JavaScript Client](https://supabase.com/docs/reference/javascript)
 - **Payments**: [Stripe](https://stripe.com/)
 - **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
 
@@ -46,10 +46,11 @@ Use the included setup script to create your `.env` file:
 pnpm db:setup
 ```
 
-Run the database migrations and seed the database with a default user and team:
+Apply the SQL migrations in `supabase/migrations` using the [Supabase CLI](https://supabase.com/docs/guides/cli) and seed the
+database with a default user and team:
 
 ```bash
-pnpm db:migrate
+supabase db push
 pnpm db:seed
 ```
 
@@ -105,8 +106,11 @@ In your Vercel project settings (or during deployment), add all the necessary en
 1. `BASE_URL`: Set this to your production domain.
 2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
 3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
-5. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
+4. `SUPABASE_URL`: Your Supabase project URL.
+5. `SUPABASE_ANON_KEY`: The anon key from your Supabase project.
+6. `SUPABASE_SERVICE_ROLE_KEY`: The service role key from your Supabase project.
+7. `POSTGRES_URL`: Set this to your production database URL (if needed for local tooling).
+8. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
 
 ## Other Templates
 

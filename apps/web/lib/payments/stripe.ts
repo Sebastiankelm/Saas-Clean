@@ -1,21 +1,28 @@
 import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
-import { Team } from '@/lib/db/schema';
+import type { Team, TeamBillingSummary } from '@/lib/db/schema';
 import {
   getTeamByStripeCustomerId,
   getUser,
-  updateTeamSubscription
+  updateTeamSubscription,
 } from '@/lib/db/queries';
+import { getSupabaseAdminClient } from '@/lib/db/client';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-04-30.basil'
+  apiVersion: '2025-04-30.basil',
 });
+
+const supabase = getSupabaseAdminClient();
+
+type TeamWithBilling = Team & {
+  billingSummary?: TeamBillingSummary | null;
+};
 
 export async function createCheckoutSession({
   team,
-  priceId
+  priceId,
 }: {
-  team: Team | null;
+  team: TeamWithBilling | null;
   priceId: string;
 }) {
   const user = await getUser();
@@ -29,25 +36,25 @@ export async function createCheckoutSession({
     line_items: [
       {
         price: priceId,
-        quantity: 1
-      }
+        quantity: 1,
+      },
     ],
     mode: 'subscription',
     success_url: `${process.env.BASE_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.BASE_URL}/pricing`,
-    customer: team.stripeCustomerId || undefined,
+    customer: team.billingSummary?.stripe_customer_id || undefined,
     client_reference_id: user.id.toString(),
     allow_promotion_codes: true,
     subscription_data: {
-      trial_period_days: 14
-    }
+      trial_period_days: 14,
+    },
   });
 
   redirect(session.url!);
 }
 
-export async function createCustomerPortalSession(team: Team) {
-  if (!team.stripeCustomerId || !team.stripeProductId) {
+export async function createCustomerPortalSession(team: TeamWithBilling) {
+  if (!team.billingSummary?.stripe_customer_id) {
     redirect('/pricing');
   }
 
@@ -57,14 +64,20 @@ export async function createCustomerPortalSession(team: Team) {
   if (configurations.data.length > 0) {
     configuration = configurations.data[0];
   } else {
-    const product = await stripe.products.retrieve(team.stripeProductId);
+    if (!team.billingSummary?.stripe_product_id) {
+      throw new Error("Team's product is not available in billing summary");
+    }
+
+    const product = await stripe.products.retrieve(
+      team.billingSummary.stripe_product_id
+    );
     if (!product.active) {
       throw new Error("Team's product is not active in Stripe");
     }
 
     const prices = await stripe.prices.list({
       product: product.id,
-      active: true
+      active: true,
     });
     if (prices.data.length === 0) {
       throw new Error("No active prices found for the team's product");
@@ -72,7 +85,7 @@ export async function createCustomerPortalSession(team: Team) {
 
     configuration = await stripe.billingPortal.configurations.create({
       business_profile: {
-        headline: 'Manage your subscription'
+        headline: 'Manage your subscription',
       },
       features: {
         subscription_update: {
@@ -82,9 +95,9 @@ export async function createCustomerPortalSession(team: Team) {
           products: [
             {
               product: product.id,
-              prices: prices.data.map((price) => price.id)
-            }
-          ]
+              prices: prices.data.map((price) => price.id),
+            },
+          ],
         },
         subscription_cancel: {
           enabled: true,
@@ -96,21 +109,21 @@ export async function createCustomerPortalSession(team: Team) {
               'missing_features',
               'switched_service',
               'unused',
-              'other'
-            ]
-          }
+              'other',
+            ],
+          },
         },
         payment_method_update: {
-          enabled: true
-        }
-      }
+          enabled: true,
+        },
+      },
     });
   }
 
   return stripe.billingPortal.sessions.create({
-    customer: team.stripeCustomerId,
+    customer: team.billingSummary!.stripe_customer_id!,
     return_url: `${process.env.BASE_URL}/dashboard`,
-    configuration: configuration.id
+    configuration: configuration.id,
   });
 }
 
@@ -128,29 +141,50 @@ export async function handleSubscriptionChange(
     return;
   }
 
-  if (status === 'active' || status === 'trialing') {
-    const plan = subscription.items.data[0]?.plan;
-    await updateTeamSubscription(team.id, {
-      stripeSubscriptionId: subscriptionId,
-      stripeProductId: plan?.product as string,
-      planName: (plan?.product as Stripe.Product).name,
-      subscriptionStatus: status
-    });
-  } else if (status === 'canceled' || status === 'unpaid') {
-    await updateTeamSubscription(team.id, {
-      stripeSubscriptionId: null,
-      stripeProductId: null,
-      planName: null,
-      subscriptionStatus: status
-    });
+  const customerEmail =
+    typeof subscription.customer_email === 'string'
+      ? subscription.customer_email
+      : null;
+
+  const { error: customerError } = await supabase
+    .from('billing_customers')
+    .upsert(
+      {
+        team_id: team.id,
+        stripe_customer_id: customerId,
+        email: customerEmail,
+      },
+      { onConflict: 'stripe_customer_id' }
+    );
+
+  if (customerError) {
+    console.error('Failed to upsert billing customer', customerError);
   }
+
+  const price = subscription.items.data[0]?.price;
+  const product = price?.product as Stripe.Product | string | undefined;
+  const productId = typeof product === 'string' ? product : product?.id ?? null;
+  const planName = typeof product === 'string' ? null : product?.name ?? null;
+  const priceId = price?.id ?? null;
+  const currentPeriodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : null;
+
+  await updateTeamSubscription(team.id, {
+    stripeSubscriptionId: subscriptionId,
+    stripeProductId: productId,
+    stripePriceId: priceId,
+    planName,
+    subscriptionStatus: status,
+    currentPeriodEnd,
+  });
 }
 
 export async function getStripePrices() {
   const prices = await stripe.prices.list({
     expand: ['data.product'],
     active: true,
-    type: 'recurring'
+    type: 'recurring',
   });
 
   return prices.data.map((price) => ({
@@ -160,14 +194,14 @@ export async function getStripePrices() {
     unitAmount: price.unit_amount,
     currency: price.currency,
     interval: price.recurring?.interval,
-    trialPeriodDays: price.recurring?.trial_period_days
+    trialPeriodDays: price.recurring?.trial_period_days,
   }));
 }
 
 export async function getStripeProducts() {
   const products = await stripe.products.list({
     active: true,
-    expand: ['data.default_price']
+    expand: ['data.default_price'],
   });
 
   return products.data.map((product) => ({
@@ -177,6 +211,6 @@ export async function getStripeProducts() {
     defaultPriceId:
       typeof product.default_price === 'string'
         ? product.default_price
-        : product.default_price?.id
+        : product.default_price?.id,
   }));
 }
