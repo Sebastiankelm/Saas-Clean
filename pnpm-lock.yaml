@@ -32,6 +32,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.47.10
         version: 2.76.1
+      '@t3-oss/env-nextjs':
+        specifier: ^0.10.1
+        version: 0.10.1(typescript@5.8.3)(zod@3.24.4)
       '@tailwindcss/postcss':
         specifier: 4.1.7
         version: 4.1.7
@@ -1382,6 +1385,24 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@t3-oss/env-core@0.10.1':
+    resolution: {integrity: sha512-GcKZiCfWks5CTxhezn9k5zWX3sMDIYf6Kaxy2Gx9YEQftFcz8hDRN56hcbylyAO3t4jQnQ5ifLawINsNgCDpOg==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@t3-oss/env-nextjs@0.10.1':
+    resolution: {integrity: sha512-iy2qqJLnFh1RjEWno2ZeyTu0ufomkXruUsOZludzDIroUabVvHsrSjtkHqwHp1/pgPUzN3yBRHMILW162X7x2Q==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@tailwindcss/node@4.1.7':
     resolution: {integrity: sha512-9rsOpdY9idRI2NH6CL4wORFY0+Q6fnx9XP9Ju+iq/0wJwGD5IByIgFmwVbyy4ymuyprj8Qh4ErxMKTUL4uNh3g==}
@@ -4495,6 +4516,19 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
+
+  '@t3-oss/env-core@0.10.1(typescript@5.8.3)(zod@3.24.4)':
+    dependencies:
+      zod: 3.24.4
+    optionalDependencies:
+      typescript: 5.8.3
+
+  '@t3-oss/env-nextjs@0.10.1(typescript@5.8.3)(zod@3.24.4)':
+    dependencies:
+      '@t3-oss/env-core': 0.10.1(typescript@5.8.3)(zod@3.24.4)
+      zod: 3.24.4
+    optionalDependencies:
+      typescript: 5.8.3
 
   '@tailwindcss/node@4.1.7':
     dependencies:

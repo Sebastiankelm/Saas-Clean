@@ -10,11 +10,11 @@ import {
   type NewTeamMember,
   type NewUser,
 } from '@/lib/db/schema';
+import { baseUrl as applicationBaseUrl, env } from '@/config/env';
 
-const databaseUrl = process.env.POSTGRES_URL;
-const authSecret = process.env.AUTH_SECRET;
-const baseUrl =
-  process.env.FRONTEND_URL ?? process.env.BASE_URL ?? 'http://localhost:3000';
+const databaseUrl = env.POSTGRES_URL;
+const authSecret = env.AUTH_SECRET;
+const baseUrl = applicationBaseUrl ?? 'http://localhost:3000';
 
 if (!databaseUrl) {
   throw new Error('POSTGRES_URL is not defined');
@@ -27,7 +27,7 @@ if (!authSecret) {
 const pool = new Pool({
   connectionString: databaseUrl,
   ssl:
-    process.env.POSTGRES_SSL === 'false'
+    env.POSTGRES_SSL === 'false'
       ? false
       : { rejectUnauthorized: false },
 });
