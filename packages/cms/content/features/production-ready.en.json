@@ -1,0 +1,7 @@
+{
+  "title": "Production ready database",
+  "description": "Launch on a managed Postgres instance that scales with your product without managing infra.",
+  "locale": "en",
+  "icon": "database",
+  "order": 1
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Gotowa do produkcji baza danych",
+  "description": "Uruchom aplikację na zarządzanym Postgresie, który rośnie razem z Twoim produktem.",
+  "locale": "pl",
+  "icon": "database",
+  "order": 1
+}

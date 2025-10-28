@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "turbo run dev --filter=@saas-clean/web",
     "build": "turbo run build",
-    "lint": "turbo run lint --filter=@saas-clean/web"
+    "lint": "turbo run lint --filter=@saas-clean/web",
+    "build:cms": "turbo run build --filter=@saas-clean/cms"
   },
   "devDependencies": {
     "eslint": "^9.14.0",
