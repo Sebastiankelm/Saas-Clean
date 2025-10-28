@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/payments/stripe';
 import { getSupabaseAdminClient } from '@/lib/db/client';
-import { setSession } from '@/lib/auth/session';
+import { auth } from '@/lib/auth/better';
 import { updateTeamSubscription } from '@/lib/db/queries';
 
 const supabase = getSupabaseAdminClient();
@@ -94,8 +94,18 @@ export async function GET(request: NextRequest) {
         : null,
     });
 
-    await setSession({ id: user.id });
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const sessionResult = (await auth.api.getSession({
+      headers: request.headers,
+      returnHeaders: true,
+    })) as unknown as { headers?: Headers };
+
+    const response = NextResponse.redirect(new URL('/dashboard', request.url));
+    const setCookieHeader = sessionResult?.headers?.get('set-cookie');
+    if (setCookieHeader) {
+      response.headers.set('set-cookie', setCookieHeader);
+    }
+
+    return response;
   } catch (error) {
     console.error('Error handling successful checkout:', error);
     return NextResponse.redirect(new URL('/error', request.url));

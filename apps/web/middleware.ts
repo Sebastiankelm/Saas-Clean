@@ -1,46 +1,52 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { signToken, verifyToken } from '@/lib/auth/session';
+import { auth } from '@/lib/auth/better';
 
-const protectedRoutes = '/dashboard';
+const protectedRoutes = ['/dashboard'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get('session');
-  const isProtectedRoute = pathname.startsWith(protectedRoutes);
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
-  if (isProtectedRoute && !sessionCookie) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+  let sessionHeaders: Headers | null = null;
+  let sessionPayload: unknown = null;
+
+  try {
+    const sessionResult = (await auth.api.getSession({
+      headers: request.headers,
+      returnHeaders: true,
+    })) as unknown as { headers?: Headers; response?: any };
+
+    sessionHeaders = sessionResult?.headers ?? null;
+    sessionPayload = sessionResult?.response ?? sessionResult ?? null;
+  } catch (error) {
+    console.error('Failed to validate session via Better Auth', error);
   }
 
-  let res = NextResponse.next();
+  const hasSession = Boolean((sessionPayload as any)?.session);
 
-  if (sessionCookie && request.method === 'GET') {
-    try {
-      const parsed = await verifyToken(sessionCookie.value);
-      const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  if (isProtectedRoute && !hasSession) {
+    const redirectResponse = NextResponse.redirect(
+      new URL('/sign-in', request.url)
+    );
 
-      res.cookies.set({
-        name: 'session',
-        value: await signToken({
-          ...parsed,
-          expires: expiresInOneDay.toISOString()
-        }),
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        expires: expiresInOneDay
-      });
-    } catch (error) {
-      console.error('Error updating session:', error);
-      res.cookies.delete('session');
-      if (isProtectedRoute) {
-        return NextResponse.redirect(new URL('/sign-in', request.url));
-      }
+    const setCookieHeader = sessionHeaders?.get('set-cookie');
+    if (setCookieHeader) {
+      redirectResponse.headers.set('set-cookie', setCookieHeader);
     }
+
+    return redirectResponse;
   }
 
-  return res;
+  const response = NextResponse.next();
+  const setCookieHeader = sessionHeaders?.get('set-cookie');
+  if (setCookieHeader) {
+    response.headers.set('set-cookie', setCookieHeader);
+  }
+
+  return response;
 }
 
 export const config = {
