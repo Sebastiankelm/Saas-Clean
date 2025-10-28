@@ -1,3 +1,4 @@
+import { getAuditLogMetrics } from '@/lib/admin/audit-log-service';
 import { query } from '@/lib/admin/db';
 
 export type WidgetDataResponse =
@@ -68,6 +69,25 @@ export async function fetchWidgetData(
           resource: row.resource_identifier
             ? `${row.resource_type}#${row.resource_identifier}`
             : row.resource_type,
+        })),
+      };
+    }
+    case 'admin.audit.top-events': {
+      const days = Number.isFinite(Number(config?.days)) ? Number(config?.days) : 30;
+      const metrics = await getAuditLogMetrics({ days });
+      return {
+        kind: 'chart',
+        series: metrics.topEvents.map((item) => ({ label: item.eventType, value: item.count })),
+      };
+    }
+    case 'admin.audit.activity-heatmap': {
+      const heatmapHours = Number.isFinite(Number(config?.hours)) ? Number(config?.hours) : 168;
+      const metrics = await getAuditLogMetrics({ heatmapHours });
+      return {
+        kind: 'chart',
+        series: metrics.activityHeatmap.map((item) => ({
+          label: `${item.date} ${String(item.hour).padStart(2, '0')}:00`,
+          value: item.count,
         })),
       };
     }

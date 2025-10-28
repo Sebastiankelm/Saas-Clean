@@ -268,6 +268,110 @@
         "limitLabel": "Limit wierszy",
         "empty": "Dodaj widgety z biblioteki, aby rozpocząć."
       }
+    },
+    "audit": {
+      "title": "Audyt i zgodność",
+      "description": "Przeglądaj działania uprzywilejowanych użytkowników, analizuj zmiany i śledź działania naprawcze dzięki szczegółowym logom audytowym.",
+      "filters": {
+        "title": "Filtruj zdarzenia",
+        "description": "Łącz filtry, aby zawęzić listę do interesujących Cię operacji.",
+        "resourceType": "Typ zasobu",
+        "resourceIdentifier": "Identyfikator zasobu",
+        "resourceIdentifierPlaceholder": "np. admin.users#123",
+        "eventType": "Typ zdarzenia",
+        "actor": "Uczestnik",
+        "search": "Wyszukiwanie",
+        "searchPlaceholder": "Szukaj w metadanych lub identyfikatorach",
+        "start": "Data początkowa",
+        "end": "Data końcowa",
+        "any": "Dowolny"
+      },
+      "actions": {
+        "apply": "Zastosuj filtry",
+        "reset": "Wyczyść",
+        "refresh": "Odśwież",
+        "previous": "Poprzednia",
+        "next": "Następna"
+      },
+      "widgets": {
+        "topEvents": "Najczęstsze zdarzenia",
+        "topEventsDescription": "Typy zdarzeń z ostatnich 30 dni.",
+        "topResources": "Aktywne zasoby",
+        "topResourcesDescription": "Zasoby z największą liczbą wpisów audytu.",
+        "heatmap": "Mapa aktywności",
+        "heatmapDescription": "Aktywność w ujęciu godzinowym z ostatnich 7 dni.",
+        "empty": "Brak danych.",
+        "eventsLabel": "zdarzenia"
+      },
+      "table": {
+        "title": "Log audytowy",
+        "summary": "{count, plural, =0 {Brak zdarzeń} one {{count} zdarzenie} few {{count} zdarzenia} other {{count} zdarzeń}}",
+        "loading": "Ładowanie zdarzeń...",
+        "error": "Nie udało się pobrać zdarzeń",
+        "empty": "Brak zdarzeń spełniających kryteria.",
+        "occurredAt": "Czas",
+        "actor": "Uczestnik",
+        "event": "Zdarzenie",
+        "resource": "Zasób",
+        "ipAddress": "Adres IP",
+        "system": "System",
+        "pagination": "Strona {page} z {totalPages}"
+      },
+      "details": {
+        "title": "Szczegóły zdarzenia",
+        "subtitle": "Wpis #{id}",
+        "empty": "Wybierz wpis, aby zobaczyć szczegóły.",
+        "placeholder": "Wybierz zdarzenie z tabeli, aby obejrzeć jego payload.",
+        "occurredAt": "Czas wykonania",
+        "actor": "Uczestnik",
+        "eventType": "Typ zdarzenia",
+        "resource": "Zasób",
+        "ipAddress": "Adres IP",
+        "metadata": "Metadane",
+        "previousValues": "Wartości poprzednie",
+        "newValues": "Nowe wartości",
+        "emptyState": "—"
+      }
+    },
+    "storage": {
+      "title": "Eksplorator Storage",
+      "description": "Przeglądaj zasobniki Supabase Storage, wyszukuj pliki i przesyłaj nowe zasoby bezpośrednio z panelu administratora.",
+      "labels": {
+        "noBucket": "Brak zasobnika"
+      },
+      "notifications": {
+        "uploadFailed": "Przesyłanie nie powiodło się. Spróbuj ponownie."
+      },
+      "explorer": {
+        "title": "Eksplorator zasobników",
+        "description": "Wybierz zasobnik i zagłębiaj się w katalogi, aby zarządzać plikami.",
+        "bucketLabel": "Zasobnik",
+        "chooseBucket": "Wybierz zasobnik",
+        "bucketsError": "Nie udało się pobrać listy zasobników",
+        "searchLabel": "Wyszukiwanie",
+        "searchPlaceholder": "Szukaj w bieżącym katalogu",
+        "searchAction": "Szukaj",
+        "refresh": "Odśwież",
+        "upload": "Prześlij plik",
+        "toRoot": "Katalog główny",
+        "upOneLevel": "Poziom wyżej",
+        "previous": "Poprzednia",
+        "next": "Następna"
+      },
+      "table": {
+        "title": "Obiekty",
+        "summary": "Wyświetlono {count} elementów",
+        "loading": "Ładowanie obiektów...",
+        "error": "Nie udało się pobrać obiektów storage",
+        "empty": "Ten katalog jest pusty.",
+        "name": "Nazwa",
+        "type": "Typ",
+        "size": "Rozmiar",
+        "updated": "Zaktualizowano",
+        "folder": "Katalog",
+        "file": "Plik",
+        "pagination": "Strona {page}{hasMore, plural, =1 { • dostępne są kolejne wyniki} other {}}"
+      }
     }
   }
 }

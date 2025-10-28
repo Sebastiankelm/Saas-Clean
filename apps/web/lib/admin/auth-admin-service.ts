@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordAuditEvent } from '@/lib/admin/audit-log-service';
 import { query, withClient } from '@/lib/admin/db';
 
 const adminRoleSchema = z.object({
@@ -240,39 +241,6 @@ export async function fetchAdminRoles(): Promise<AdminRole[]> {
   return rows.map((row) => adminRoleSchemaLoose.parse(row));
 }
 
-async function recordAuditEntry(params: {
-  actorAdminUserId: string | null;
-  eventType: string;
-  resourceType: string;
-  resourceIdentifier?: string | null;
-  previousValues?: Record<string, unknown> | null;
-  newValues?: Record<string, unknown> | null;
-  metadata?: Record<string, unknown> | null;
-}) {
-  const { actorAdminUserId, eventType, resourceType, resourceIdentifier, previousValues, newValues, metadata } = params;
-
-  await query(
-    `insert into admin.audit_log (
-       actor_user_id,
-       event_type,
-       resource_type,
-       resource_identifier,
-       previous_values,
-       new_values,
-       metadata
-     ) values ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)` ,
-    [
-      actorAdminUserId,
-      eventType,
-      resourceType,
-      resourceIdentifier ?? null,
-      previousValues ? JSON.stringify(previousValues) : null,
-      newValues ? JSON.stringify(newValues) : null,
-      metadata ? JSON.stringify(metadata) : null,
-    ]
-  );
-}
-
 export async function assignRolesToUser(
   userId: string,
   roleIds: string[],
@@ -311,7 +279,7 @@ export async function assignRolesToUser(
   });
 
   for (const roleId of inserted) {
-    await recordAuditEntry({
+    await recordAuditEvent({
       actorAdminUserId,
       eventType: 'admin.user_roles.assigned',
       resourceType: 'admin.user_roles',
@@ -330,7 +298,7 @@ export async function recordUserAudit(
   newValues: Record<string, unknown> | null,
   metadata: Record<string, unknown> | null = null
 ) {
-  await recordAuditEntry({
+  await recordAuditEvent({
     actorAdminUserId,
     eventType,
     resourceType: 'admin.users',

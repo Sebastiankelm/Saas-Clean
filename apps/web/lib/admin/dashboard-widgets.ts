@@ -67,6 +67,28 @@ export const DASHBOARD_WIDGET_LIBRARY: WidgetDefinition[] = [
       ],
     },
   },
+  {
+    key: 'admin.audit.top-events',
+    name: 'Top Audit Events',
+    description: 'Most frequent audit events captured over the last 30 days.',
+    type: 'chart',
+    defaultSize: { w: 6, h: 5 },
+    defaultConfig: {
+      title: 'Top Audit Events',
+      definitionKey: 'admin.audit.top-events',
+    },
+  },
+  {
+    key: 'admin.audit.activity-heatmap',
+    name: 'Audit Activity Heatmap',
+    description: 'Hourly audit activity for the past week.',
+    type: 'chart',
+    defaultSize: { w: 8, h: 6 },
+    defaultConfig: {
+      title: 'Audit Activity Heatmap',
+      definitionKey: 'admin.audit.activity-heatmap',
+    },
+  },
 ];
 
 export function getWidgetDefinition(key: string): WidgetDefinition | undefined {
