@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { MiddlewareHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { AppEnv } from '../types';

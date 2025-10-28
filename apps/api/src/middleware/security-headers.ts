@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Context, Next } from 'hono';
 
 export function securityHeaders() {

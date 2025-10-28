@@ -8,7 +8,30 @@
     "build": {
       "outputs": ["dist/**", ".next/**", ".content-collections/**"],
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "env": [
+        "POSTGRES_URL",
+        "POSTGRES_PRISMA_URL",
+        "SUPABASE_URL",
+        "POSTGRES_URL_NON_POOLING",
+        "SUPABASE_JWT_SECRET",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_DATABASE",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "POSTGRES_HOST",
+        "SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "AUTH_SECRET",
+        "FRONTEND_URL",
+        "BASE_URL",
+        "CONTACT_EMAIL",
+        "I18N_DEFAULT_LOCALE",
+        "I18N_SUPPORTED_LOCALES",
+        "POSTGRES_SSL"
+      ]
     },
     "@saas-clean/web#build": {
       "outputs": [".next/**"],
