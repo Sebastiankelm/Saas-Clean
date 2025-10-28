@@ -17,6 +17,7 @@ const createUserSchema = z.object({
   timezone: z.string().default('UTC'),
   isActive: z.boolean().default(true),
   preferences: z.record(z.any()).optional(),
+  roleIds: z.array(z.string().uuid()).optional(),
 });
 
 const updateUserSchema = createUserSchema.partial();
@@ -27,6 +28,73 @@ const ensureClient = (c: Context<AppEnv>) => {
     throw new HTTPException(500, { message: 'Supabase client is not available.' });
   }
   return supabase;
+};
+
+const syncUserRoles = async (
+  supabase: ReturnType<typeof ensureClient>,
+  userId: string,
+  roleIds: string[] | undefined,
+  assignedBy: string | null
+) => {
+  if (!roleIds?.length) {
+    return;
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .schema('admin')
+    .from('user_roles')
+    .select('role_id')
+    .eq('user_id', userId);
+
+  if (existingError) {
+    throw new HTTPException(400, { message: existingError.message });
+  }
+
+  const existingSet = new Set((existing ?? []).map((row) => row.role_id));
+  const toInsert = roleIds.filter((roleId) => !existingSet.has(roleId));
+
+  if (!toInsert.length) {
+    return;
+  }
+
+  const { error } = await supabase
+    .schema('admin')
+    .from('user_roles')
+    .insert(
+      toInsert.map((roleId) => ({
+        user_id: userId,
+        role_id: roleId,
+        assigned_by: assignedBy,
+      }))
+    );
+
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+};
+
+const recordAuditEntry = async (
+  supabase: ReturnType<typeof ensureClient>,
+  actorAdminUserId: string | null,
+  eventType: string,
+  resourceIdentifier: string,
+  previousValues: unknown,
+  newValues: unknown,
+  metadata?: Record<string, unknown>
+) => {
+  const { error } = await supabase.schema('admin').from('audit_log').insert({
+    actor_user_id: actorAdminUserId,
+    event_type: eventType,
+    resource_type: 'admin.users',
+    resource_identifier: resourceIdentifier,
+    previous_values: previousValues ?? null,
+    new_values: newValues ?? null,
+    metadata: metadata ?? null,
+  });
+
+  if (error) {
+    console.error('Failed to record auth-admin audit entry', error);
+  }
 };
 
 authAdminRouter.get(
@@ -55,6 +123,7 @@ authAdminRouter.post(
   async (c) => {
     const supabase = ensureClient(c);
     const payload = createUserSchema.parse(await c.req.json());
+    const actor = c.get('actor');
 
     const insertPayload = {
       auth_user_id: payload.authUserId ?? null,
@@ -78,11 +147,26 @@ authAdminRouter.post(
       throw new HTTPException(400, { message: error.message });
     }
 
+    await syncUserRoles(supabase, data.id, payload.roleIds, actor?.adminUserId ?? null);
+
     updateAuditContext(c, {
+      eventType: 'admin.users.created',
       resourceType: 'admin.user',
       resourceIdentifier: data.id,
       newValues: data,
     });
+
+    await recordAuditEntry(
+      supabase,
+      actor?.adminUserId ?? null,
+      'admin.users.created',
+      data.id,
+      null,
+      {
+        ...data,
+        roleIds: payload.roleIds ?? [],
+      }
+    );
 
     return c.json({ user: data }, 201);
   }
@@ -95,6 +179,7 @@ authAdminRouter.patch(
     const supabase = ensureClient(c);
     const id = c.req.param('id');
     const payload = updateUserSchema.parse(await c.req.json());
+    const actor = c.get('actor');
 
     const { data: existing, error: existingError } = await supabase
       .schema('admin')
@@ -131,12 +216,27 @@ authAdminRouter.patch(
       throw new HTTPException(400, { message: error.message });
     }
 
+    await syncUserRoles(supabase, id, payload.roleIds, actor?.adminUserId ?? null);
+
     updateAuditContext(c, {
+      eventType: 'admin.users.updated',
       resourceType: 'admin.user',
       resourceIdentifier: id,
       previousValues: existing,
       newValues: data,
     });
+
+    await recordAuditEntry(
+      supabase,
+      actor?.adminUserId ?? null,
+      'admin.users.updated',
+      id,
+      existing,
+      {
+        ...data,
+        roleIds: payload.roleIds ?? [],
+      }
+    );
 
     return c.json({ user: data });
   }

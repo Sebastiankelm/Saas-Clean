@@ -715,6 +715,21 @@ components:
         preferences:
           type: object
           additionalProperties: true
+        roleIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        roleIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        roleIds:
+          type: array
+          items:
+            type: string
+            format: uuid
         last_sign_in_at:
           type: string
           format: date-time
@@ -749,6 +764,11 @@ components:
         preferences:
           type: object
           additionalProperties: true
+        roleIds:
+          type: array
+          items:
+            type: string
+            format: uuid
       required: [displayName]
     UpdateAdminUserRequest:
       type: object
@@ -770,6 +790,11 @@ components:
         preferences:
           type: object
           additionalProperties: true
+        roleIds:
+          type: array
+          items:
+            type: string
+            format: uuid
     StorageObject:
       type: object
       properties:

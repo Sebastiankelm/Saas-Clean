@@ -770,6 +770,7 @@ export interface components {
             preferences?: {
                 [key: string]: unknown;
             };
+            roleIds?: string[];
         };
         UpdateAdminUserRequest: {
             authUserId?: string;
@@ -782,6 +783,7 @@ export interface components {
             preferences?: {
                 [key: string]: unknown;
             };
+            roleIds?: string[];
         };
         StorageObject: {
             name: string;

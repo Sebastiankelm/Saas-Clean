@@ -397,7 +397,7 @@ export function CmsManagerView() {
     locale: '',
     search: '',
   });
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [selectedCollectionIdState, setSelectedCollectionIdState] = useState<string | null>(null);
   const [entryForm, setEntryForm] = useState<EntryFormState>({
     locale: 'en',
     slug: '',
@@ -419,13 +419,23 @@ export function CmsManagerView() {
     mutate: mutateCollections,
   } = useSWR<CollectionsResponse>(collectionsKey, fetcher);
 
-  const collections = collectionsData?.collections ?? [];
+  const collections = useMemo(
+    () => collectionsData?.collections ?? [],
+    [collectionsData?.collections]
+  );
 
-  useEffect(() => {
-    if (!selectedCollectionId && collections.length) {
-      setSelectedCollectionId(collections[0].id);
+  const selectedCollectionId = useMemo(() => {
+    if (!collections.length) {
+      return null;
     }
-  }, [collections, selectedCollectionId]);
+    if (
+      selectedCollectionIdState &&
+      collections.some((collection) => collection.id === selectedCollectionIdState)
+    ) {
+      return selectedCollectionIdState;
+    }
+    return collections[0].id;
+  }, [collections, selectedCollectionIdState]);
 
   const fieldsKey = selectedCollectionId
     ? `/api/admin/cms/collections/${selectedCollectionId}/fields`
@@ -456,17 +466,21 @@ export function CmsManagerView() {
     mutate: mutateEntries,
   } = useSWR<EntriesResponse>(entriesKey, fetcher);
 
-  const entries = entriesData?.entries ?? [];
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const entries = useMemo(() => entriesData?.entries ?? [], [entriesData?.entries]);
+  const [selectedEntryIdState, setSelectedEntryIdState] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!selectedEntryId && entries.length) {
-      setSelectedEntryId(entries[0].id);
+  const selectedEntryId = useMemo(() => {
+    if (!entries.length) {
+      return null;
     }
-    if (selectedEntryId && !entries.find((entry) => entry.id === selectedEntryId)) {
-      setSelectedEntryId(entries[0]?.id ?? null);
+    if (
+      selectedEntryIdState &&
+      entries.some((entry) => entry.id === selectedEntryIdState)
+    ) {
+      return selectedEntryIdState;
     }
-  }, [entries, selectedEntryId]);
+    return entries[0].id;
+  }, [entries, selectedEntryIdState]);
 
   const versionsKey = selectedEntryId
     ? `/api/admin/cms/collections/${selectedCollectionId}/entries/${selectedEntryId}/versions`
@@ -475,8 +489,8 @@ export function CmsManagerView() {
   const versions = versionsData?.versions ?? [];
 
   const handleCollectionChange = useCallback((collectionId: string) => {
-    setSelectedCollectionId(collectionId);
-    setSelectedEntryId(null);
+    setSelectedCollectionIdState(collectionId);
+    setSelectedEntryIdState(null);
     setEntryForm({
       locale: 'en',
       slug: '',
@@ -604,7 +618,7 @@ export function CmsManagerView() {
   const handleSelectEntry = useCallback(
     (entry: EntryRecord | null) => {
       if (!entry) {
-        setSelectedEntryId(null);
+        setSelectedEntryIdState(null);
         setEntryForm({
           locale: 'en',
           slug: '',
@@ -616,7 +630,7 @@ export function CmsManagerView() {
         return;
       }
 
-      setSelectedEntryId(entry.id);
+      setSelectedEntryIdState(entry.id);
       setEntryForm({
         id: entry.id,
         locale: entry.locale,
@@ -704,7 +718,7 @@ export function CmsManagerView() {
         status: 'draft',
         data: '{}',
       });
-      setSelectedEntryId(null);
+      setSelectedEntryIdState(null);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Unable to delete entry');
     }
