@@ -268,6 +268,110 @@
         "limitLabel": "Row limit",
         "empty": "Add widgets from the library to start building."
       }
+    },
+    "audit": {
+      "title": "Audit & Compliance",
+      "description": "Review privileged activity, investigate changes, and trace remediation with granular audit logs.",
+      "filters": {
+        "title": "Filter events",
+        "description": "Combine filters to focus on the precise actions you need to investigate.",
+        "resourceType": "Resource type",
+        "resourceIdentifier": "Resource identifier",
+        "resourceIdentifierPlaceholder": "e.g. admin.users#123",
+        "eventType": "Event type",
+        "actor": "Actor",
+        "search": "Keyword search",
+        "searchPlaceholder": "Search metadata or identifiers",
+        "start": "Start date",
+        "end": "End date",
+        "any": "Any"
+      },
+      "actions": {
+        "apply": "Apply filters",
+        "reset": "Reset",
+        "refresh": "Refresh",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "widgets": {
+        "topEvents": "Most frequent events",
+        "topEventsDescription": "Event types captured in the last 30 days.",
+        "topResources": "Active resources",
+        "topResourcesDescription": "Resources with the highest volume of audit activity.",
+        "heatmap": "Activity heatmap",
+        "heatmapDescription": "Hourly activity for the last 7 days.",
+        "empty": "No data available yet.",
+        "eventsLabel": "events"
+      },
+      "table": {
+        "title": "Audit log",
+        "summary": "{count, plural, =0 {No events found} one {{count} event} other {{count} events}}",
+        "loading": "Loading events...",
+        "error": "Unable to load events",
+        "empty": "No audit events match the selected filters.",
+        "occurredAt": "Occurred",
+        "actor": "Actor",
+        "event": "Event",
+        "resource": "Resource",
+        "ipAddress": "IP address",
+        "system": "System",
+        "pagination": "Page {page} of {totalPages}"
+      },
+      "details": {
+        "title": "Event details",
+        "subtitle": "Entry #{id}",
+        "empty": "Select an entry to review the payload and diff.",
+        "placeholder": "Select an event from the table to inspect its payload.",
+        "occurredAt": "Occurred at",
+        "actor": "Actor",
+        "eventType": "Event type",
+        "resource": "Resource",
+        "ipAddress": "IP address",
+        "metadata": "Metadata",
+        "previousValues": "Previous values",
+        "newValues": "New values",
+        "emptyState": "—"
+      }
+    },
+    "storage": {
+      "title": "Storage Explorer",
+      "description": "Browse Supabase Storage buckets, search for assets, and upload new files directly from the admin panel.",
+      "labels": {
+        "noBucket": "No bucket"
+      },
+      "notifications": {
+        "uploadFailed": "Upload failed. Please try again."
+      },
+      "explorer": {
+        "title": "Bucket explorer",
+        "description": "Select a bucket and drill into folders to manage stored assets.",
+        "bucketLabel": "Bucket",
+        "chooseBucket": "Choose a bucket",
+        "bucketsError": "Unable to load buckets",
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search within current folder",
+        "searchAction": "Search",
+        "refresh": "Refresh",
+        "upload": "Upload file",
+        "toRoot": "Root",
+        "upOneLevel": "Up one level",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "table": {
+        "title": "Objects",
+        "summary": "Showing {count} items",
+        "loading": "Loading objects...",
+        "error": "Unable to load storage objects",
+        "empty": "This folder is empty.",
+        "name": "Name",
+        "type": "Type",
+        "size": "Size",
+        "updated": "Updated",
+        "folder": "Folder",
+        "file": "File",
+        "pagination": "Page {page}{hasMore, plural, =1 { • more results available} other {}}"
+      }
     }
   }
 }

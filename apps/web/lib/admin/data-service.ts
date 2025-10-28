@@ -1,3 +1,4 @@
+import { searchAuditLogs } from '@/lib/admin/audit-log-service';
 import { withClient, query } from '@/lib/admin/db';
 
 export type TableIdentifier = {
@@ -632,51 +633,10 @@ export async function getAuditLogs(
   page = 1,
   pageSize = 25
 ) {
-  const offset = (Math.max(page, 1) - 1) * pageSize;
-  const conditions = ['resource_type = $1'];
-  const values: unknown[] = [resourceType];
-
-  if (resourceIdentifier) {
-    conditions.push('resource_identifier = $2');
-    values.push(resourceIdentifier);
-  }
-
-  const whereClause = conditions.join(' and ');
-
-  const [dataResult, countResult] = await Promise.all([
-    query<{
-      id: number;
-      actor_user_id: string | null;
-      event_type: string;
-      resource_type: string;
-      resource_identifier: string | null;
-      previous_values: Record<string, unknown> | null;
-      new_values: Record<string, unknown> | null;
-      metadata: Record<string, unknown> | null;
-      ip_address: string | null;
-      occurred_at: string;
-    }>(
-      `select *
-       from admin.audit_log
-       where ${whereClause}
-       order by occurred_at desc
-       limit $${values.length + 1}
-       offset $${values.length + 2}`,
-      [...values, pageSize, offset]
-    ),
-    query<{ count: string }>(
-      `select count(*)::bigint as count from admin.audit_log where ${whereClause}`,
-      values
-    ),
-  ]);
-
-  const total = Number(countResult.rows[0]?.count ?? 0);
-
-  return {
-    entries: dataResult.rows,
-    total,
+  return searchAuditLogs({
+    resourceType,
+    resourceIdentifier: resourceIdentifier ?? null,
     page,
     pageSize,
-    hasMore: offset + dataResult.rows.length < total,
-  };
+  });
 }
