@@ -6,7 +6,9 @@
       "persistent": true
     },
     "build": {
-      "outputs": ["dist/**", ".next/**", ".content-collections/**"]
+      "outputs": ["dist/**", ".next/**", ".content-collections/**"],
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
     },
     "lint": {
       "outputs": []
