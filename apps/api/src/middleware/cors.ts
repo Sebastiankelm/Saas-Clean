@@ -33,7 +33,7 @@ export function cors(config: CorsConfig) {
     
     // Handle preflight requests
     if (c.req.method === 'OPTIONS') {
-      return c.text('', 204);
+      return c.newResponse(null, { status: 204 });
     }
     
     await next();

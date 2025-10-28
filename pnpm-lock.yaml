@@ -120,6 +120,9 @@ importers:
       jose:
         specifier: ^6.0.11
         version: 6.0.11
+      kysely:
+        specifier: ^0.28.8
+        version: 0.28.8
       lucide-react:
         specifier: ^0.511.0
         version: 0.511.0(react@19.1.0)

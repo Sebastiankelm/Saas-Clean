@@ -1,16 +1,15 @@
 # Quick Start
 
-Ten przewodnik prowadzi przez uruchomienie kompletnego środowiska lokalnego: bazy Supabase, backendu API oraz frontendowej aplikacji Next.js. Zakłada on, że pracujesz na maszynie deweloperskiej i masz dostęp do repozytorium.
+Ten przewodnik prowadzi przez uruchomienie środowiska deweloperskiego używając Supabase Cloud oraz Next.js. Zakłada on, że pracujesz na maszynie deweloperskiej i masz dostęp do repozytorium.
 
 ## Wymagania wstępne
 
 - **Node.js 20+** (najłatwiej zainstalować przez [nvm](https://github.com/nvm-sh/nvm)).
 - **pnpm 9+** – menedżer pakietów wykorzystywany w całym monorepo.
-- **Supabase CLI** – służy do startowania usług, stosowania migracji i generowania typów.
-- **Docker Desktop / Podman** – wymagany przez Supabase CLI do uruchomienia Postgresa.
-- (Opcjonalnie) **Stripe CLI** – tylko jeśli chcesz lokalnie zasiewać dane płatności lub odbierać webhooki.
+- **Konto Supabase** – utwórz darmowe konto na [supabase.com](https://supabase.com).
+- (Opcjonalnie) **Stripe CLI** – tylko jeśli chcesz lokalnie odbierać webhooki.
 
-> **Uwaga:** repo zawiera plik `.env.example`. Skopiuj go do `.env.local` (frontend) i uzupełnij brakujące wartości przed startem usług.
+> **Uwaga:** Projekt używa Supabase Cloud zamiast lokalnego Docker. Skonfiguruj projekt Supabase i wypełnij plik `.env.local` (frontend) wartościami z Supabase Dashboard.
 
 ## 1. Instalacja zależności
 
@@ -20,22 +19,24 @@ pnpm install
 
 Komenda zainstaluje wszystkie pakiety aplikacji webowej, API i bibliotek współdzielonych.
 
-## 2. Uruchomienie Supabase
+## 2. Konfiguracja Supabase Cloud
 
-1. W katalogu głównym uruchom lokalny stack Supabase z ograniczonym zestawem usług:
+1. Utwórz projekt na [supabase.com](https://supabase.com/dashboard)
+2. W Settings > API skopiuj:
+   - Project URL (SUPABASE_URL)
+   - anon/public key (SUPABASE_ANON_KEY)
+   - service_role key (SUPABASE_SERVICE_ROLE_KEY)
+3. Przejdź do SQL Editor i wykonaj migracje z katalogu `supabase/migrations`:
    ```bash
-   supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+   # Wykonaj pliki migracji w kolejności:
+   # - 20250211120000_init.sql
+   # - 20250224130000_create_function_logs.sql
+   # - 20250225090000_add_invoices.sql
+   # - 20250225100000_add_gdpr_consents.sql
+   # - 20250305090000_create_admin_cms_dashboards.sql
+   # - 20250328000000_supamode_schemas.sql
    ```
-2. Zastosuj migracje SQL do lokalnej bazy:
-   ```bash
-   supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
-   ```
-3. Wygeneruj typy TypeScript używane przez warstwę API oraz web:
-   ```bash
-   pnpm supabase:typegen
-   ```
-
-W każdej chwili możesz zatrzymać kontenery komendą `supabase stop`.
+4. Skonfiguruj zmienne środowiskowe w pliku `apps/web/.env.local` (zobacz przykład poniżej)
 
 ## 3. Seedowanie danych i Stripe
 
@@ -72,11 +73,33 @@ Aplikacja działa na `http://localhost:3000`. Middleware pilnuje autoryzacji, dl
 ## 6. Przydatne komendy
 
 - `pnpm test:unit`, `pnpm test:integration`, `pnpm test:e2e` – uruchamiają zestawy testów dla web i API.
-- `supabase status` – sprawdza stan usług Supabase (przydatne, gdy CLI zgłasza konflikty portów).
-- `supabase db reset` – czyści lokalny stan bazy i ponownie stosuje migracje.
+- `pnpm dev` – uruchamia serwer deweloperski Next.js z Turbopack.
+- `pnpm --filter=@saas-clean/api dev` – uruchamia backend API (Hono).
 
-## 7. Porządkowanie środowiska
+## 7. Zmienne środowiskowe (.env.local)
 
-Po zakończeniu pracy zatrzymaj usługi Supabase (`supabase stop`) i zamknij procesy `pnpm dev` oraz `pnpm --filter=@saas-clean/api dev`. Dzięki temu kontenery oraz porty zostaną zwolnione.
+Utwórz plik `apps/web/.env.local` z następującymi wartościami z Twojego projektu Supabase:
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+AUTH_SECRET=generate-minimum-32-char-secret
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+FRONTEND_URL=http://localhost:3000
+BASE_URL=http://localhost:3000
+CONTACT_EMAIL=support@example.com
+I18N_DEFAULT_LOCALE=en
+I18N_SUPPORTED_LOCALES=en,pl
+# Użyj connection string z Supabase Settings > Database
+POSTGRES_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+POSTGRES_SSL=true
+```
+
+## 8. Porządkowanie środowiska
+
+Po zakończeniu pracy zamknij procesy `pnpm dev` oraz `pnpm --filter=@saas-clean/api dev`.
 
 Masz problemy z konfiguracją? Zajrzyj do [docs/troubleshooting.md](./troubleshooting.md).

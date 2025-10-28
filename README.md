@@ -91,28 +91,18 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 ## Supabase
 
-Supabase powers authentication metadata, organizations, and billing aggregates. The project ships with a checked-in
-[`supabase/config.toml`](supabase/config.toml) so the CLI spins up the same Postgres image that runs in CI.
+Supabase powers authentication metadata, organizations, and billing aggregates. This project uses **Supabase Cloud** for development and production.
 
-### CLI workflow
+### Setup
 
 Skrócona lista komend znajduje się w [Quick Start](docs/quick-start.md). Poniżej podsumowanie:
 
-```bash
-# Start the local stack (only Postgres is required for migrations/tests)
-supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+1. Utwórz projekt na [supabase.com](https://supabase.com/dashboard)
+2. Wykonaj migracje z `supabase/migrations` w SQL Editor
+3. Skonfiguruj zmienne środowiskowe w `apps/web/.env.local`
+4. Zasiej dane testowe: `pnpm --filter=@saas-clean/web db:seed`
 
-# Apply every SQL file in supabase/migrations to the local database
-supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
-
-# Generate the typed client after schema changes (writes to supabase/types.ts)
-pnpm supabase:typegen
-
-# Stop containers when you are done
-supabase stop
-```
-
-Seed data lives in [`apps/web/lib/db/seed.ts`](apps/web/lib/db/seed.ts); run `pnpm --filter=@saas-clean/web db:seed` once the migrations succeed. GitHub Actions (`.github/workflows/ci.yml`) mirrors this workflow: the job installs the CLI, applies `supabase/migrations`, and only then executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` to guarantee schema drift is caught early.
+Seed data lives in [`apps/web/lib/db/seed.ts`](apps/web/lib/db/seed.ts). Uruchom `pnpm --filter=@saas-clean/web db:seed` po wykonaniu migracji.
 
 W razie problemów z migracjami lub seedingiem sprawdź sekcję [Troubleshooting](docs/troubleshooting.md).
 

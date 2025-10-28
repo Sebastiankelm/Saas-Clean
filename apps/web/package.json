@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@saas-clean/cms": "workspace:*",
-    "@saas-clean/ui": "workspace:*",
     "@saas-clean/plugins": "workspace:*",
+    "@saas-clean/ui": "workspace:*",
     "@supabase/supabase-js": "^2.47.10",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tailwindcss/postcss": "4.1.7",
@@ -31,6 +31,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "jose": "^6.0.11",
+    "kysely": "^0.28.8",
     "lucide-react": "^0.511.0",
     "next": "15.4.0-canary.47",
     "next-intl": "^3.24.0",

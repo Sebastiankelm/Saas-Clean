@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var fetch: typeof globalThis.fetch;
-}
-
 const setBaseEnv = () => {
   process.env.SUPABASE_URL = 'http://localhost:54321';
   process.env.SUPABASE_ANON_KEY = 'anon-key';
