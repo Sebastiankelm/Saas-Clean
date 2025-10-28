@@ -7,7 +7,11 @@
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "build": "tsc --project tsconfig.json",
-    "openapi:generate": "openapi-typescript openapi/openapi.yaml --output ../../packages/api-types/src/generated.ts"
+    "openapi:generate": "openapi-typescript openapi/openapi.yaml --output ../../packages/api-types/src/generated.ts",
+    "test": "vitest run --workspace vitest.workspace.ts",
+    "test:unit": "vitest run --workspace vitest.workspace.ts --project unit",
+    "test:integration": "vitest run --workspace vitest.workspace.ts --project integration",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.3",
@@ -17,8 +21,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.12",
+    "@playwright/test": "^1.50.1",
     "openapi-typescript": "^7.6.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
   }
 }

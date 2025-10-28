@@ -5,6 +5,8 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
+import saasPlugin from './packages/eslint-plugin-saas/index.js';
+
 export default [
   {
     ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
@@ -59,6 +61,20 @@ export default [
       next: {
         rootDir: ['apps/*/'],
       },
+    },
+  },
+  {
+    files: ['packages/{ui,plugins,api-types}/src/**/*.{ts,tsx,js,jsx}'],
+    plugins: {
+      saas: saasPlugin,
+    },
+    rules: {
+      'saas/enforce-package-exports': [
+        'error',
+        {
+          packages: ['@saas-clean/ui', '@saas-clean/plugins', '@saas-clean/api-types'],
+        },
+      ],
     },
   },
 ];

@@ -8,6 +8,10 @@
     "lint": "turbo run lint --filter=@saas-clean/web",
     "typecheck": "turbo run typecheck --filter=@saas-clean/web",
     "test": "turbo run test --filter=@saas-clean/web",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "supabase:typegen": "supabase gen types typescript --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres --schema public,admin,cms,dashboards > supabase/types.ts",
     "build:cms": "turbo run build --filter=@saas-clean/cms"
   },
   "devDependencies": {

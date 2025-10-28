@@ -12,8 +12,31 @@ const clientOptions: SupabaseClientOptions<'public'> = {
 };
 
 let adminClient: AppSupabaseClient | null = null;
+let overrides:
+  | {
+      adminClient?: AppSupabaseClient;
+      createUserClient?: (accessToken?: string) => AppSupabaseClient;
+    }
+  | null = null;
+
+export const __setSupabaseTestClients = (
+  nextOverrides:
+    | {
+        adminClient?: AppSupabaseClient;
+        createUserClient?: (accessToken?: string) => AppSupabaseClient;
+      }
+    | null
+) => {
+  overrides = nextOverrides;
+  if (!nextOverrides) {
+    adminClient = null;
+  }
+};
 
 export const getSupabaseAdminClient = (): AppSupabaseClient => {
+  if (overrides?.adminClient) {
+    return overrides.adminClient;
+  }
   if (!adminClient) {
     adminClient = createClient<Database>(env.supabaseUrl, env.supabaseServiceRoleKey, clientOptions);
   }
@@ -21,6 +44,9 @@ export const getSupabaseAdminClient = (): AppSupabaseClient => {
 };
 
 export const createSupabaseUserClient = (accessToken?: string): AppSupabaseClient => {
+  if (overrides?.createUserClient) {
+    return overrides.createUserClient(accessToken);
+  }
   const headers = accessToken
     ? { Authorization: `Bearer ${accessToken}` }
     : undefined;
