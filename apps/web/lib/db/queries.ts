@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth/session';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/better';
 import { getSupabaseAdminClient } from './client';
 import type {
   ActivityLog,
@@ -13,30 +13,26 @@ import type {
 
 const supabase = getSupabaseAdminClient();
 
-type SessionData = {
-  user: { id: number };
-  expires: string;
-};
-
 async function getSessionUserId(): Promise<number | null> {
-  const sessionCookie = (await cookies()).get('session');
-  if (!sessionCookie?.value) {
-    return null;
-  }
+  const headerList = await headers();
 
   try {
-    const sessionData = (await verifyToken(sessionCookie.value)) as SessionData;
-    if (!sessionData?.user?.id) {
-      return null;
+    const session = await auth.api.getSession({
+      headers: headerList,
+    });
+
+    const supabaseId =
+      (session?.user as { supabaseId?: number } | undefined)?.supabaseId ??
+      (session as { user?: { supabaseId?: number } })?.user?.supabaseId;
+
+    if (typeof supabaseId === 'number') {
+      return supabaseId;
     }
-    if (new Date(sessionData.expires) < new Date()) {
-      return null;
-    }
-    return sessionData.user.id;
   } catch (error) {
-    console.error('Failed to verify session token', error);
-    return null;
+    console.error('Failed to resolve Better Auth session', error);
   }
+
+  return null;
 }
 
 export async function getUser(): Promise<User | null> {

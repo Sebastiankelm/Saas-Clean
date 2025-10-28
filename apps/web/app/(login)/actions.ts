@@ -2,22 +2,16 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import {
   ActivityType,
   type NewActivityLog,
-  type NewTeam,
   type NewTeamMember,
-  type NewUser,
   type Team,
   type TeamMember,
   type User,
+  type Invitation,
 } from '@/lib/db/schema';
-import {
-  comparePasswords,
-  hashPassword,
-  setSession,
-} from '@/lib/auth/session';
+import { comparePasswords, hashPassword } from '@/lib/auth/session';
 import { createCheckoutSession } from '@/lib/payments/stripe';
 import { getUser, getUserWithTeam } from '@/lib/db/queries';
 import {
@@ -25,6 +19,9 @@ import {
   validatedActionWithUser,
 } from '@/lib/auth/middleware';
 import { getSupabaseAdminClient } from '@/lib/db/client';
+import { auth } from '@/lib/auth/better';
+import { headers } from 'next/headers';
+import { APIError } from 'better-auth';
 
 const supabase = getSupabaseAdminClient();
 
@@ -65,63 +62,67 @@ const signInSchema = z.object({
 
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const { email, password } = data;
+  const headerList = await headers();
 
-  const { data: foundUser, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
-    .is('deleted_at', null)
-    .maybeSingle();
+  try {
+    await auth.api.signInEmail({
+      body: { email, password },
+      headers: headerList,
+    });
 
-  if (userError || !foundUser) {
-    return {
-      error: 'Invalid email or password. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  const isPasswordValid = await comparePasswords(
-    password,
-    foundUser.password_hash
-  );
-
-  if (!isPasswordValid) {
-    return {
-      error: 'Invalid email or password. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  let team: Team | null = null;
-  const { data: membership } = await supabase
-    .from('team_members')
-    .select('team_id')
-    .eq('user_id', foundUser.id)
-    .maybeSingle();
-
-  if (membership?.team_id) {
-    const { data: teamRecord } = await supabase
-      .from('teams')
+    const { data: supabaseUser } = await supabase
+      .from('users')
       .select('*')
-      .eq('id', membership.team_id)
+      .eq('email', email)
       .maybeSingle();
-    team = teamRecord ?? null;
+
+    if (!supabaseUser) {
+      return {
+        error: 'Account is missing required data. Please contact support.',
+        email,
+        password,
+      };
+    }
+
+    let team: Team | null = null;
+    const { data: membership } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', supabaseUser.id)
+      .maybeSingle();
+
+    if (membership?.team_id) {
+      const { data: teamRecord } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', membership.team_id)
+        .maybeSingle();
+      team = teamRecord ?? null;
+    }
+
+    const redirectTo = formData.get('redirect') as string | null;
+    if (redirectTo === 'checkout') {
+      const priceId = formData.get('priceId') as string;
+      return createCheckoutSession({ team, priceId });
+    }
+
+    redirect('/dashboard');
+  } catch (error) {
+    if (error instanceof APIError) {
+      return {
+        error: 'Invalid email or password. Please try again.',
+        email,
+        password,
+      };
+    }
+
+    console.error('Failed to sign in with Better Auth', error);
+    return {
+      error: 'Unable to sign in right now. Please try again later.',
+      email,
+      password,
+    };
   }
-
-  await Promise.all([
-    setSession({ id: foundUser.id }),
-    logActivity(team?.id, foundUser.id, ActivityType.SIGN_IN),
-  ]);
-
-  const redirectTo = formData.get('redirect') as string | null;
-  if (redirectTo === 'checkout') {
-    const priceId = formData.get('priceId') as string;
-    return createCheckoutSession({ team, priceId });
-  }
-
-  redirect('/dashboard');
 });
 
 const signUpSchema = z.object({
@@ -132,133 +133,136 @@ const signUpSchema = z.object({
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const { email, password, inviteId } = data;
+  const headerList = await headers();
 
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
-
-  if (existingUser) {
-    return {
-      error: 'Failed to create user. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  const passwordHash = await hashPassword(password);
-
-  const newUser: NewUser = {
-    email,
-    password_hash: passwordHash,
-    role: 'owner',
-  } as unknown as NewUser;
-
-  const { data: createdUser, error: createUserError } = await supabase
-    .from('users')
-    .insert(newUser)
-    .select('*')
-    .single();
-
-  if (createUserError || !createdUser) {
-    return {
-      error: 'Failed to create user. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  let teamId: number | null = null;
-  let userRole: TeamMember['role'] = 'owner';
-  let createdTeam: Team | null = null;
+  let invitation: Invitation | null = null;
+  const numericInviteId = inviteId ? Number(inviteId) : null;
 
   if (inviteId) {
-    const { data: invitation } = await supabase
+    if (Number.isNaN(numericInviteId)) {
+      return { error: 'Invalid or expired invitation.', email, password };
+    }
+
+    const { data: invitationRecord } = await supabase
       .from('invitations')
       .select('*')
-      .eq('id', Number(inviteId))
+      .eq('id', numericInviteId)
       .eq('email', email)
       .eq('status', 'pending')
       .maybeSingle();
 
-    if (!invitation) {
+    if (!invitationRecord) {
       return { error: 'Invalid or expired invitation.', email, password };
     }
 
-    teamId = invitation.team_id;
-    userRole = invitation.role;
+    invitation = invitationRecord;
+  }
+
+  try {
+    await auth.api.signUpEmail({
+      body: { email, password, inviteId },
+      headers: headerList,
+    });
+  } catch (error) {
+    if (error instanceof APIError) {
+      return {
+        error: 'Failed to create user. Please try again.',
+        email,
+        password,
+      };
+    }
+
+    console.error('Failed to sign up with Better Auth', error);
+    return {
+      error: 'Failed to create user. Please try again.',
+      email,
+      password,
+    };
+  }
+
+  const { data: createdUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (!createdUser) {
+    return {
+      error: 'Failed to create user. Please try again.',
+      email,
+      password,
+    };
+  }
+
+  let createdTeam: Team | null = null;
+
+  if (invitation) {
+    const { data: existingMemberships } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', createdUser.id);
+
+    if (existingMemberships && existingMemberships.length > 0) {
+      const ids = existingMemberships.map((membership) => membership.team_id);
+      const { data: potentialTeams } = await supabase
+        .from('teams')
+        .select('id, name')
+        .in('id', ids);
+
+      const defaultTeam = potentialTeams?.find(
+        (teamRecord) => teamRecord?.name === `${email}'s Team`
+      );
+
+      if (defaultTeam) {
+        await supabase
+          .from('team_members')
+          .delete()
+          .eq('team_id', defaultTeam.id)
+          .eq('user_id', createdUser.id);
+        await supabase.from('teams').delete().eq('id', defaultTeam.id);
+      }
+    }
 
     await supabase
       .from('invitations')
       .update({ status: 'accepted' })
       .eq('id', invitation.id);
 
-    const { data: teamRecord } = await supabase
+    await supabase.from('team_members').insert({
+      team_id: invitation.team_id,
+      user_id: createdUser.id,
+      role: invitation.role,
+    } as NewTeamMember);
+
+    const { data: invitedTeam } = await supabase
       .from('teams')
       .select('*')
-      .eq('id', teamId)
+      .eq('id', invitation.team_id)
       .maybeSingle();
-    createdTeam = teamRecord ?? null;
 
-    await logActivity(teamId, createdUser.id, ActivityType.ACCEPT_INVITATION);
+    createdTeam = invitedTeam ?? null;
+
+    await Promise.all([
+      logActivity(invitation.team_id, createdUser.id, ActivityType.ACCEPT_INVITATION),
+      logActivity(invitation.team_id, createdUser.id, ActivityType.SIGN_UP),
+      refreshTeamViews(),
+    ]);
   } else {
-    const newTeam: NewTeam = {
-      name: `${email}'s Team`,
-    } as NewTeam;
+    const { data: membership } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', createdUser.id)
+      .maybeSingle();
 
-    const { data: teamRecord, error: createTeamError } = await supabase
-      .from('teams')
-      .insert(newTeam)
-      .select('*')
-      .single();
-
-    if (createTeamError || !teamRecord) {
-      return {
-        error: 'Failed to create team. Please try again.',
-        email,
-        password,
-      };
+    if (membership?.team_id) {
+      const { data: teamRecord } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', membership.team_id)
+        .maybeSingle();
+      createdTeam = teamRecord ?? null;
     }
-
-    teamId = teamRecord.id;
-    createdTeam = teamRecord;
-
-    await logActivity(teamId, createdUser.id, ActivityType.CREATE_TEAM);
   }
-
-  if (!teamId) {
-    return {
-      error: 'Failed to associate user with a team. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  const newTeamMember: NewTeamMember = {
-    user_id: createdUser.id,
-    team_id: teamId,
-    role: userRole,
-  } as unknown as NewTeamMember;
-
-  const { error: memberError } = await supabase
-    .from('team_members')
-    .insert(newTeamMember);
-
-  if (memberError) {
-    console.error('Failed to create team member', memberError);
-    return {
-      error: 'Failed to create user. Please try again.',
-      email,
-      password,
-    };
-  }
-
-  await Promise.all([
-    logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
-    setSession({ id: createdUser.id }),
-    refreshTeamViews(),
-  ]);
 
   const redirectTo = formData.get('redirect') as string | null;
   if (redirectTo === 'checkout') {
@@ -270,10 +274,14 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 });
 
 export async function signOut() {
-  const user = (await getUser()) as User;
-  const userWithTeam = await getUserWithTeam(user.id);
-  await logActivity(userWithTeam?.team_id, user.id, ActivityType.SIGN_OUT);
-  (await cookies()).delete('session');
+  const headerList = await headers();
+  try {
+    await auth.api.signOut({
+      headers: headerList,
+    });
+  } catch (error) {
+    console.error('Failed to sign out with Better Auth', error);
+  }
 }
 
 const updatePasswordSchema = z.object({
@@ -378,7 +386,15 @@ export const deleteAccount = validatedActionWithUser(
       await refreshTeamViews();
     }
 
-    (await cookies()).delete('session');
+    const headerList = await headers();
+    try {
+      await auth.api.signOut({
+        headers: headerList,
+      });
+    } catch (error) {
+      console.error('Failed to clear Better Auth session during deletion', error);
+    }
+
     redirect('/sign-in');
   }
 );
