@@ -1,10 +1,11 @@
-import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db/drizzle';
-import { users, teams, teamMembers } from '@/lib/db/schema';
-import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/payments/stripe';
 import Stripe from 'stripe';
+import { stripe } from '@/lib/payments/stripe';
+import { getSupabaseAdminClient } from '@/lib/db/client';
+import { setSession } from '@/lib/auth/session';
+import { updateTeamSubscription } from '@/lib/db/queries';
+
+const supabase = getSupabaseAdminClient();
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -37,58 +38,63 @@ export async function GET(request: NextRequest) {
       expand: ['items.data.price.product'],
     });
 
-    const plan = subscription.items.data[0]?.price;
+    const price = subscription.items.data[0]?.price;
 
-    if (!plan) {
+    if (!price) {
       throw new Error('No plan found for this subscription.');
     }
 
-    const productId = (plan.product as Stripe.Product).id;
-
-    if (!productId) {
-      throw new Error('No product ID found for this subscription.');
-    }
+    const product = price.product as Stripe.Product;
+    const productId = product.id;
 
     const userId = session.client_reference_id;
     if (!userId) {
       throw new Error("No user ID found in session's client_reference_id.");
     }
 
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, Number(userId)))
-      .limit(1);
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', Number(userId))
+      .maybeSingle();
 
-    if (user.length === 0) {
+    if (userError || !user) {
       throw new Error('User not found in database.');
     }
 
-    const userTeam = await db
-      .select({
-        teamId: teamMembers.teamId,
-      })
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, user[0].id))
-      .limit(1);
+    const { data: membership, error: membershipError } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    if (userTeam.length === 0) {
+    if (membershipError || !membership) {
       throw new Error('User is not associated with any team.');
     }
 
-    await db
-      .update(teams)
-      .set({
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        stripeProductId: productId,
-        planName: (plan.product as Stripe.Product).name,
-        subscriptionStatus: subscription.status,
-        updatedAt: new Date(),
-      })
-      .where(eq(teams.id, userTeam[0].teamId));
+    await supabase
+      .from('billing_customers')
+      .upsert(
+        {
+          team_id: membership.team_id,
+          stripe_customer_id: customerId,
+          email: user.email,
+        },
+        { onConflict: 'stripe_customer_id' }
+      );
 
-    await setSession(user[0]);
+    await updateTeamSubscription(membership.team_id, {
+      stripeSubscriptionId: subscriptionId,
+      stripeProductId: productId,
+      stripePriceId: price.id,
+      planName: product.name,
+      subscriptionStatus: subscription.status,
+      currentPeriodEnd: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null,
+    });
+
+    await setSession({ id: user.id });
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
     console.error('Error handling successful checkout:', error);
