@@ -1,0 +1,38 @@
+[
+  {
+    "name": "task-daily-reports",
+    "schedule": "0 6 * * *",
+    "function": "task",
+    "request": {
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"task\":\"daily_reports\"}"
+    }
+  },
+  {
+    "name": "task-cleanup-invitations",
+    "schedule": "0 3 * * *",
+    "function": "task",
+    "request": {
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"task\":\"cleanup_invitations\"}"
+    }
+  },
+  {
+    "name": "task-sync-billing",
+    "schedule": "0 * * * *",
+    "function": "task",
+    "request": {
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"task\":\"sync_billing\"}"
+    }
+  }
+]

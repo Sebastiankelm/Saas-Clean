@@ -263,6 +263,46 @@ export interface Database {
           }
         ];
       };
+      function_logs: {
+        Row: {
+          id: number;
+          function_name: string;
+          task_name: string;
+          status: 'success' | 'failure';
+          message: string;
+          metadata: Json | null;
+          triggered_by: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          function_name: string;
+          task_name: string;
+          status: 'success' | 'failure';
+          message: string;
+          metadata?: Json | null;
+          triggered_by?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          function_name?: string;
+          task_name?: string;
+          status?: 'success' | 'failure';
+          message?: string;
+          metadata?: Json | null;
+          triggered_by?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'function_logs_triggered_by_fkey';
+            columns: ['triggered_by'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: {
       team_memberships_mv: {
