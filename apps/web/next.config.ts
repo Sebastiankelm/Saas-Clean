@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   typescript: {
     // !! WARN !! This is for Vercel deployment only - fix TypeScript errors in production
     ignoreBuildErrors: true,
+    tsconfigPath: './tsconfig.json',
   },
   eslint: {
     ignoreDuringBuilds: true,
