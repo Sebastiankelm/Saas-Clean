@@ -1,0 +1,870 @@
+openapi: 3.1.0
+info:
+  title: Supamode Admin API
+  version: 0.1.0
+  description: |
+    HTTP API for the Supamode administrative console. The API is protected by Supabase
+    JWT tokens that include the `supamode_access` metadata flag and enforces RBAC via
+    Supabase stored procedures. MFA or Captcha validation is required for sensitive
+    mutations. All mutating operations emit audit log entries to `admin.audit_log`.
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: http://localhost:4000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Data
+    description: Data explorer endpoints
+  - name: CMS
+    description: Content management operations
+  - name: Dashboards
+    description: Dashboard builder endpoints
+  - name: Auth Admin
+    description: Administrative user management
+  - name: Storage
+    description: Supabase Storage helpers for the CMS
+  - name: Audit
+    description: Audit trail inspection
+paths:
+  /data/overview:
+    get:
+      tags: [Data]
+      summary: Fetch dataset overview counts
+      responses:
+        '200':
+          description: Overview counts for core datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      collections:
+                        type: integer
+                        minimum: 0
+                      entries:
+                        type: integer
+                        minimum: 0
+                      dashboards:
+                        type: integer
+                        minimum: 0
+                    required: [collections, entries, dashboards]
+                required: [summary]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /data/query:
+    post:
+      tags: [Data]
+      summary: Execute a filtered query against a schema-qualified table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataQueryRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  count:
+                    type: integer
+                    nullable: true
+                required: [data]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /cms/collections:
+    get:
+      tags: [CMS]
+      summary: List CMS collections
+      responses:
+        '200':
+          description: CMS collections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collections:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Collection'
+                required: [collections]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [CMS]
+      summary: Create a CMS collection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCollectionRequest'
+      responses:
+        '201':
+          description: Created collection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collection:
+                    $ref: '#/components/schemas/Collection'
+                required: [collection]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /cms/collections/{id}:
+    patch:
+      tags: [CMS]
+      summary: Update a CMS collection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCollectionRequest'
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collection:
+                    $ref: '#/components/schemas/Collection'
+                required: [collection]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /dashboards:
+    get:
+      tags: [Dashboards]
+      summary: List dashboards
+      responses:
+        '200':
+          description: Dashboard list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dashboards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dashboard'
+                required: [dashboards]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Dashboards]
+      summary: Create a dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDashboardRequest'
+      responses:
+        '201':
+          description: Created dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dashboard:
+                    $ref: '#/components/schemas/Dashboard'
+                required: [dashboard]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /dashboards/{id}:
+    patch:
+      tags: [Dashboards]
+      summary: Update a dashboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDashboardRequest'
+      responses:
+        '200':
+          description: Updated dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dashboard:
+                    $ref: '#/components/schemas/Dashboard'
+                required: [dashboard]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /auth-admin/users:
+    get:
+      tags: [Auth Admin]
+      summary: List admin console users
+      responses:
+        '200':
+          description: Admin users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+                required: [users]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Auth Admin]
+      summary: Create an admin console user record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminUserRequest'
+      responses:
+        '201':
+          description: Created admin user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/AdminUser'
+                required: [user]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /auth-admin/users/{id}:
+    patch:
+      tags: [Auth Admin]
+      summary: Update an admin console user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminUserRequest'
+      responses:
+        '200':
+          description: Updated admin user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/AdminUser'
+                required: [user]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /storage/objects:
+    get:
+      tags: [Storage]
+      summary: List storage objects within a bucket path
+      parameters:
+        - name: bucket
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: path
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Storage objects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  objects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StorageObject'
+                required: [objects]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Storage]
+      summary: Upload or replace a storage object
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadStorageObjectRequest'
+      responses:
+        '201':
+          description: Uploaded object metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object:
+                    $ref: '#/components/schemas/UploadedStorageObject'
+                required: [object]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      tags: [Storage]
+      summary: Remove storage objects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveStorageObjectRequest'
+      responses:
+        '200':
+          description: Removed objects summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  removed:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                required: [removed]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /audit/logs:
+    get:
+      tags: [Audit]
+      summary: List audit log entries
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+                  count:
+                    type: integer
+                    nullable: true
+                required: [entries]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /audit/logs/{id}:
+    get:
+      tags: [Audit]
+      summary: Fetch a specific audit log entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Audit entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entry:
+                    $ref: '#/components/schemas/AuditLogEntry'
+                required: [entry]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Authentication is required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Caller lacks required permissions or MFA/Captcha validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Invalid payload or parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    DataQueryRequest:
+      type: object
+      properties:
+        schema:
+          type: string
+          enum: [public, admin, cms, dashboards]
+          default: public
+        table:
+          type: string
+        select:
+          type: array
+          items:
+            type: string
+        filters:
+          type: object
+          additionalProperties: true
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+      required: [table]
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        is_singleton:
+          type: boolean
+        default_locale:
+          type: string
+        created_by:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, slug, name, is_singleton, default_locale, created_at, updated_at]
+    CreateCollectionRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        isSingleton:
+          type: boolean
+          default: false
+        defaultLocale:
+          type: string
+          default: en
+      required: [slug, name]
+    UpdateCollectionRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        isSingleton:
+          type: boolean
+        defaultLocale:
+          type: string
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [private, team, public]
+        team_id:
+          type: integer
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        owner_user_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, slug, title, visibility, metadata, created_at, updated_at]
+    CreateDashboardRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        visibility:
+          type: string
+          enum: [private, team, public]
+          default: private
+        teamId:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [slug, title]
+    UpdateDashboardRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        visibility:
+          type: string
+          enum: [private, team, public]
+        teamId:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        auth_user_id:
+          type: string
+          nullable: true
+        app_user_id:
+          type: integer
+          nullable: true
+        display_name:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        locale:
+          type: string
+        timezone:
+          type: string
+        is_active:
+          type: boolean
+        preferences:
+          type: object
+          additionalProperties: true
+        last_sign_in_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, locale, timezone, is_active, preferences, created_at, updated_at]
+    CreateAdminUserRequest:
+      type: object
+      properties:
+        authUserId:
+          type: string
+        appUserId:
+          type: integer
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        locale:
+          type: string
+          default: en
+        timezone:
+          type: string
+          default: UTC
+        isActive:
+          type: boolean
+          default: true
+        preferences:
+          type: object
+          additionalProperties: true
+      required: [displayName]
+    UpdateAdminUserRequest:
+      type: object
+      properties:
+        authUserId:
+          type: string
+        appUserId:
+          type: integer
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        locale:
+          type: string
+        timezone:
+          type: string
+        isActive:
+          type: boolean
+        preferences:
+          type: object
+          additionalProperties: true
+    StorageObject:
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          nullable: true
+        last_accessed_at:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        buckets_id:
+          type: string
+          nullable: true
+      required: [name]
+    UploadStorageObjectRequest:
+      type: object
+      properties:
+        bucket:
+          type: string
+        path:
+          type: string
+        contentType:
+          type: string
+          default: application/octet-stream
+        data:
+          type: string
+          description: Base64 encoded payload or data URI
+        upsert:
+          type: boolean
+      required: [bucket, path, data]
+    UploadedStorageObject:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        path:
+          type: string
+        fullPath:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [path, fullPath]
+    RemoveStorageObjectRequest:
+      type: object
+      properties:
+        bucket:
+          type: string
+        paths:
+          type: array
+          items:
+            type: string
+      required: [bucket, paths]
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        actor_user_id:
+          type: string
+          nullable: true
+        event_type:
+          type: string
+        resource_type:
+          type: string
+        resource_identifier:
+          type: string
+          nullable: true
+        previous_values:
+          type: object
+          nullable: true
+          additionalProperties: true
+        new_values:
+          type: object
+          nullable: true
+          additionalProperties: true
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+        ip_address:
+          type: string
+          nullable: true
+        occurred_at:
+          type: string
+          format: date-time
+      required: [id, event_type, resource_type, occurred_at]
