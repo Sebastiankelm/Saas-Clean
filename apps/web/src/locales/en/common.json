@@ -205,5 +205,69 @@
     "existingUser": "Already have an account?",
     "createAccount": "Create an account",
     "signinExisting": "Sign in to existing account"
+  },
+  "admin": {
+    "dashboards": {
+      "title": "Dashboard Builder",
+      "description": "Design, configure, and share analytics dashboards with your team.",
+      "library": {
+        "title": "Widget library",
+        "description": "Drag widgets into your dashboard to visualise key metrics.",
+        "addButton": "Add to dashboard",
+        "empty": "No widgets available yet."
+      },
+      "errors": {
+        "missingDefinition": "Widget definition not found. Remove it and add again.",
+        "dataLoad": "Unable to load widget data"
+      },
+      "table": {
+        "empty": "No activity available"
+      },
+      "sidebar": {
+        "title": "Dashboard settings",
+        "description": "Manage metadata, visibility, and audience for the selected dashboard.",
+        "selectLabel": "Select dashboard",
+        "slug": "Slug",
+        "titleField": "Title",
+        "descriptionField": "Description",
+        "visibilityLabel": "Visibility",
+        "teamLabel": "Shared team",
+        "teamPlaceholder": "Choose a team"
+      },
+      "visibility": {
+        "private": "Private",
+        "team": "Team",
+        "public": "Public"
+      },
+      "create": {
+        "title": "Create new dashboard",
+        "description": "Provision a fresh dashboard to start assembling widgets.",
+        "slug": "Slug",
+        "name": "Title",
+        "descriptionField": "Description",
+        "visibility": "Visibility",
+        "teamLabel": "Team",
+        "teamPlaceholder": "Select a team",
+        "submit": "Create dashboard",
+        "submitting": "Creating..."
+      },
+      "builder": {
+        "title": "Layout",
+        "description": "Drag widgets to arrange your dashboard. Resize using the handle in the corner.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "widgetTitle": "Title",
+        "remove": "Remove widget",
+        "statusLabel": "Status filter",
+        "statusAll": "All statuses",
+        "statusDraft": "Draft",
+        "statusReview": "In review",
+        "statusPublished": "Published",
+        "statusArchived": "Archived",
+        "limitLabel": "Row limit",
+        "empty": "Add widgets from the library to start building."
+      }
+    }
   }
 }

@@ -1032,7 +1032,7 @@ export function CmsManagerView() {
                     onChange={(event) =>
                       setFieldForm((prev) => ({ ...prev, config: event.target.value }))
                     }
-                    placeholder="{\n  \"placeholder\": \"Enter a title\"\n}"
+                    placeholder={'{\n  "placeholder": "Enter a title"\n}'}
                   />
                 </div>
                 <label className="flex items-center gap-2 text-sm">
