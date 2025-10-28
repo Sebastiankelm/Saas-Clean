@@ -205,5 +205,69 @@
     "existingUser": "Masz już konto?",
     "createAccount": "Utwórz konto",
     "signinExisting": "Zaloguj się na istniejące konto"
+  },
+  "admin": {
+    "dashboards": {
+      "title": "Kreator paneli",
+      "description": "Projektuj, konfiguruj i udostępniaj pulpity analityczne swojemu zespołowi.",
+      "library": {
+        "title": "Biblioteka widgetów",
+        "description": "Przeciągaj widgety na układ, aby wizualizować kluczowe wskaźniki.",
+        "addButton": "Dodaj do panelu",
+        "empty": "Brak dostępnych widgetów."
+      },
+      "errors": {
+        "missingDefinition": "Nie znaleziono definicji widgetu. Usuń go i dodaj ponownie.",
+        "dataLoad": "Nie udało się załadować danych widgetu"
+      },
+      "table": {
+        "empty": "Brak aktywności"
+      },
+      "sidebar": {
+        "title": "Ustawienia panelu",
+        "description": "Zarządzaj metadanymi, widocznością i odbiorcami wybranego panelu.",
+        "selectLabel": "Wybierz panel",
+        "slug": "Slug",
+        "titleField": "Tytuł",
+        "descriptionField": "Opis",
+        "visibilityLabel": "Widoczność",
+        "teamLabel": "Udostępnij zespołowi",
+        "teamPlaceholder": "Wybierz zespół"
+      },
+      "visibility": {
+        "private": "Prywatny",
+        "team": "Zespół",
+        "public": "Publiczny"
+      },
+      "create": {
+        "title": "Utwórz nowy panel",
+        "description": "Przygotuj pusty panel, aby zacząć układać widgety.",
+        "slug": "Slug",
+        "name": "Tytuł",
+        "descriptionField": "Opis",
+        "visibility": "Widoczność",
+        "teamLabel": "Zespół",
+        "teamPlaceholder": "Wybierz zespół",
+        "submit": "Utwórz panel",
+        "submitting": "Tworzenie..."
+      },
+      "builder": {
+        "title": "Układ",
+        "description": "Przeciągaj widgety, aby ułożyć panel. Zmieniaj rozmiar za pomocą uchwytu w rogu.",
+        "save": "Zapisz zmiany",
+        "saving": "Zapisywanie...",
+        "saved": "Zapisano",
+        "widgetTitle": "Tytuł",
+        "remove": "Usuń widget",
+        "statusLabel": "Filtr statusu",
+        "statusAll": "Wszystkie statusy",
+        "statusDraft": "Szkic",
+        "statusReview": "W recenzji",
+        "statusPublished": "Opublikowane",
+        "statusArchived": "Archiwalne",
+        "limitLabel": "Limit wierszy",
+        "empty": "Dodaj widgety z biblioteki, aby rozpocząć."
+      }
+    }
   }
 }
