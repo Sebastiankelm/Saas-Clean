@@ -1,0 +1,25 @@
+project_id = "saas-clean-local"
+
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql_public", "extensions"]
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+[inbucket]
+smtp_port = 54324
+imap_port = 54325
+pop3_port = 54326
+web_port = 54327
+
+[storage]
+file_size_limit = 52428800
+
+[analytics]
+port = 54328
+

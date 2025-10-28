@@ -107,6 +107,120 @@ You can listen for Stripe webhooks locally through their CLI to handle subscript
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
+## Supabase
+
+Supabase powers authentication metadata, organizations, and billing aggregates. The project ships with a checked-in
+[`supabase/config.toml`](supabase/config.toml) so the CLI spins up the same Postgres image that runs in CI.
+
+### CLI workflow
+
+```bash
+# Start the local stack (only Postgres is required for migrations/tests)
+pnpm dlx supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+# Apply every SQL file in supabase/migrations to the local database
+pnpm dlx supabase migration up --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Generate the typed client after schema changes (writes to supabase/types.ts)
+pnpm dlx supabase gen types typescript --local --schema public --project-ref saas-clean-local > supabase/types.ts
+
+# Stop containers when you are done
+pnpm dlx supabase stop
+```
+
+Seed data lives in [`apps/web/lib/db/seed.ts`](apps/web/lib/db/seed.ts); run `pnpm --filter=@saas-clean/web db:seed` once the
+migrations succeed. GitHub Actions (`.github/workflows/ci.yml`) mirrors this workflow: the job installs the CLI, applies
+`supabase/migrations`, and only then executes `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` to guarantee schema
+drift is caught early.
+
+### Edge functions and logs
+
+Supabase Edge Functions reside under [`supabase/functions`](supabase/functions). They emit entries into the
+`function_logs` table (see the ERD below) so you can inspect operational failures inside the dashboard or by querying the
+table directly.
+
+## Better Auth
+
+Better Auth is configured in [`apps/web/lib/auth/better.ts`](apps/web/lib/auth/better.ts). It links Postgres (via the
+`POSTGRES_URL`) with Supabase tables and keeps identities synchronized:
+
+- The `organization` plugin provisions default teams and roles when a user signs up.
+- Database hooks ensure Supabase tables (`users`, `team_members`, `billing_customers`) are kept in lockstep with the auth
+  provider. Invite flows reuse the same hook to connect an existing team to the new user.
+- JWT session cookies are handled via the `nextCookies` integration so server components and API routes can read the
+  authenticated user automatically.
+
+Provision the secrets listed in the environment table and ensure the Postgres database is reachable from the Next.js app.
+
+## Internationalization (i18n)
+
+Routes are namespaced by locale under [`apps/web/app/[locale]`](apps/web/app/%5Blocale%5D). The locale layouts hydrate the
+[`LocaleProvider`](apps/web/app/%5Blocale%5D/LocaleProvider.tsx) which wires `next-intl` with translation dictionaries from
+[`apps/web/src/i18n`](apps/web/src/i18n). Supported locales are declared in
+[`apps/web/src/i18n/config.ts`](apps/web/src/i18n/config.ts); add new translations by creating `apps/web/src/locales/<code>`
+folders that mirror the `common.json` structure.
+
+## CMS
+
+Marketing content is stored in [`packages/cms`](packages/cms). Update `content.config.ts` to add new collections and run
+`pnpm build:cms` to generate static JSON that the web app consumes. The package is part of the workspace so edits to CMS
+content will be type-checked when you run `pnpm typecheck` or `pnpm build`.
+
+## Testing
+
+The web application now bundles unit and end-to-end tooling:
+
+- `pnpm --filter=@saas-clean/web test` runs Vitest with React Testing Library against modules under `apps/web/src`.
+- `pnpm --filter=@saas-clean/web test:e2e` starts Playwright (the included specs are marked as `skip` until fixtures are ready).
+
+## Database Reference
+
+### Entity relationship diagram
+
+```mermaid
+erDiagram
+  USERS ||--o{ TEAM_MEMBERS : includes
+  USERS ||--o{ ACTIVITY_LOGS : records
+  USERS ||--o{ INVITATIONS : sends
+  USERS ||--o{ FUNCTION_LOGS : triggers
+
+  TEAMS ||--o{ TEAM_MEMBERS : hosts
+  TEAMS ||--o{ ACTIVITY_LOGS : logs
+  TEAMS ||--o{ INVITATIONS : issues
+  TEAMS ||--o{ BILLING_CUSTOMERS : owns
+  TEAMS ||--o{ SUBSCRIPTIONS : manages
+  TEAMS ||--o{ FUNCTION_LOGS : context
+
+  BILLING_CUSTOMERS ||--o{ SUBSCRIPTIONS : relates
+```
+
+Materialized views `team_memberships_mv` and `team_billing_mv` provide denormalized snapshots for dashboard queries. Refresh
+them via the `refresh_team_views` RPC (called automatically by subscription updates).
+
+### API endpoints
+
+| Route | Methods | Description |
+| --- | --- | --- |
+| `/api/user` | `GET` | Returns the authenticated user with soft-delete filtering. |
+| `/api/team` | `GET` | Fetches the team, member roster, and billing summary tied to the session. |
+| `/api/admin/tasks` | `POST` | Invokes the `task` Supabase Edge Function for whitelisted background jobs. Requires an admin role. |
+| `/api/stripe/checkout` | `GET` | Handles the return from Stripe Checkout, provisions billing metadata, and refreshes the Better Auth session. |
+| `/api/stripe/webhook` | `POST` | Validates Stripe signatures and reacts to subscription lifecycle events. |
+
+### Row level security
+
+RLS is enabled for every user-facing table. Highlights from
+[`supabase/migrations/20250211120000_init.sql`](supabase/migrations/20250211120000_init.sql):
+
+- **`users`** – `users_self_access` and `users_self_update` restrict reads and writes to the authenticated profile.
+- **`teams`** – Members can select their teams, while owners/admins can insert or update team metadata.
+- **`team_members`** – Only owners/admins can manage membership; any member can read rosters.
+- **`activity_logs`** – Visible to the associated team or to the actor who triggered the event.
+- **`invitations`** – Read access for members, management access for owners/admins.
+- **`billing_customers` & `subscriptions`** – Owners/admins can inspect billing records for their team.
+
+Additional audit data (`function_logs`) is append-only and intentionally left without RLS so background jobs can write freely.
+
 ## Testing Payments
 
 To test Stripe payments, use the following test card details:
