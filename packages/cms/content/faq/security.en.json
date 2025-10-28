@@ -1,0 +1,6 @@
+{
+  "question": "Is my customer data secure?",
+  "answer": "We store credentials with industry-standard encryption and run automatic backups every hour.",
+  "locale": "en",
+  "order": 2
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Stripe subscriptions built-in",
+  "description": "Handle trials, upgrades, and invoicing with a tested Stripe integration and webhooks.",
+  "locale": "en",
+  "icon": "payments",
+  "order": 2
+}

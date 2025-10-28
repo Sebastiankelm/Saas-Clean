@@ -1,0 +1,209 @@
+{
+  "language": {
+    "label": "Wybierz język",
+    "options": {
+      "en": "Angielski",
+      "pl": "Polski"
+    }
+  },
+  "navigation": {
+    "brand": "ACME",
+    "links": {
+      "pricing": "Cennik",
+      "signUp": "Zarejestruj się",
+      "dashboard": "Panel"
+    },
+    "actions": {
+      "signOut": "Wyloguj się"
+    }
+  },
+  "marketing": {
+    "hero": {
+      "title": "Zbuduj swoje SaaS",
+      "highlight": "Szybciej niż kiedykolwiek",
+      "description": "Uruchom produkt SaaS w rekordowym czasie dzięki naszemu gotowemu szablonowi. Wykorzystaj nowoczesne technologie i niezbędne integracje.",
+      "cta": "Wdróż własny projekt"
+    },
+    "features": {
+      "nextjs": {
+        "title": "Next.js i React",
+        "description": "Wykorzystaj nowoczesne technologie, aby zapewnić wysoką wydajność i świetne doświadczenie deweloperskie."
+      },
+      "postgres": {
+        "title": "Postgres i Drizzle ORM",
+        "description": "Stabilna baza danych z intuicyjnym ORM, która ułatwia zarządzanie danymi i skalowanie."
+      },
+      "stripe": {
+        "title": "Integracja ze Stripe",
+        "description": "Bezproblemowe płatności i zarządzanie subskrypcjami z wykorzystaniem Stripe."
+      }
+    },
+    "cta": {
+      "title": "Gotowy na start?",
+      "description": "Nasz szablon dostarcza wszystko, czego potrzebujesz, aby szybko uruchomić SaaS. Skup się na tym, co wyróżnia Twój produkt.",
+      "action": "Zobacz kod"
+    },
+    "testimonials": {
+      "title": "Uwielbiany przez szybkie zespoły SaaS",
+      "description": "Posłuchaj, jak liderzy produktów przyspieszają wdrożenia z Saas Clean."
+    },
+    "faq": {
+      "title": "Najczęściej zadawane pytania",
+      "description": "Wszystko, co musisz wiedzieć przed startem."
+    },
+    "blog": {
+      "title": "Najnowsze wpisy na blogu",
+      "description": "Lekcje produktowe, informacje o wydaniach i wskazówki dotyczące wzrostu od naszego zespołu."
+    }
+  },
+  "terminal": {
+    "steps": [
+      "git clone https://github.com/nextjs/saas-starter",
+      "pnpm install",
+      "pnpm db:setup",
+      "pnpm db:migrate",
+      "pnpm db:seed",
+      "pnpm dev 🎉"
+    ],
+    "copy": "Skopiuj do schowka"
+  },
+  "pricing": {
+    "trial": "z {days} dniowym okresem próbnym",
+    "interval": {
+      "month": "za użytkownika / miesiąc",
+      "year": "za użytkownika / rok"
+    },
+    "plans": {
+      "base": {
+        "name": "Base",
+        "features": [
+          "Nielimitowane użycie",
+          "Nielimitowana liczba członków",
+          "Wsparcie e-mail"
+        ]
+      },
+      "plus": {
+        "name": "Plus",
+        "features": [
+          "Wszystko z planu Base oraz:",
+          "Wczesny dostęp do nowych funkcji",
+          "Wsparcie 24/7 + kanał Slack"
+        ]
+      }
+    },
+    "button": {
+      "label": "Rozpocznij",
+      "loading": "Ładowanie..."
+    }
+  },
+  "dashboard": {
+    "title": "Ustawienia zespołu",
+    "navigation": {
+      "team": "Zespół",
+      "general": "Ogólne",
+      "activity": "Aktywność",
+      "security": "Bezpieczeństwo",
+      "title": "Ustawienia",
+      "toggle": "Przełącz panel boczny"
+    },
+    "subscription": {
+      "title": "Subskrypcja zespołu",
+      "currentPlan": "Obecny plan: {plan}",
+      "free": "Darmowy",
+      "manage": "Zarządzaj subskrypcją",
+      "status": {
+        "active": "Rozliczane miesięcznie",
+        "trialing": "Okres próbny",
+        "none": "Brak aktywnej subskrypcji"
+      }
+    },
+    "members": {
+      "title": "Członkowie zespołu",
+      "unknown": "Nieznany użytkownik",
+      "empty": "Brak członków zespołu.",
+      "removing": "Usuwanie...",
+      "remove": "Usuń",
+      "removed": "Członek zespołu został usunięty"
+    },
+    "invite": {
+      "title": "Zaproś członka zespołu",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Wprowadź adres email",
+      "roleLabel": "Rola",
+      "roles": {
+        "member": "Członek",
+        "owner": "Właściciel"
+      },
+      "invited": "Zaproszenie wysłane",
+      "submitting": "Zapraszanie...",
+      "submit": "Zaproś",
+      "ownerOnly": "Tylko właściciel zespołu może zapraszać nowych członków."
+    },
+    "general": {
+      "title": "Ustawienia ogólne",
+      "accountInfo": "Informacje o koncie",
+      "form": {
+        "nameLabel": "Imię i nazwisko",
+        "namePlaceholder": "Wpisz swoje imię",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Wpisz swój email",
+        "saving": "Zapisywanie...",
+        "submit": "Zapisz zmiany",
+        "success": "Dane konta zostały zaktualizowane."
+      }
+    },
+    "security": {
+      "title": "Ustawienia bezpieczeństwa",
+      "password": {
+        "title": "Hasło",
+        "currentLabel": "Obecne hasło",
+        "newLabel": "Nowe hasło",
+        "confirmLabel": "Potwierdź nowe hasło",
+        "updating": "Aktualizowanie...",
+        "submit": "Zaktualizuj hasło"
+      },
+      "delete": {
+        "title": "Usuń konto",
+        "description": "Usunięcie konta jest nieodwracalne. Zachowaj ostrożność.",
+        "confirmLabel": "Potwierdź hasło",
+        "deleting": "Usuwanie...",
+        "submit": "Usuń konto"
+      }
+    },
+    "activity": {
+      "title": "Historia aktywności",
+      "recent": "Ostatnie zdarzenia",
+      "actions": {
+        "SIGN_UP": "Zarejestrowałeś się",
+        "SIGN_IN": "Zalogowałeś się",
+        "SIGN_OUT": "Wylogowałeś się",
+        "UPDATE_PASSWORD": "Zmieniono hasło",
+        "DELETE_ACCOUNT": "Usunięto konto",
+        "UPDATE_ACCOUNT": "Zaktualizowano konto",
+        "CREATE_TEAM": "Utworzono nowy zespół",
+        "REMOVE_TEAM_MEMBER": "Usunięto członka zespołu",
+        "INVITE_TEAM_MEMBER": "Zaproszono członka zespołu",
+        "ACCEPT_INVITATION": "Zaakceptowano zaproszenie",
+        "default": "Zdarzenie zostało zapisane"
+      },
+      "fromIp": "z adresu IP {ip}",
+      "emptyTitle": "Brak aktywności",
+      "emptyDescription": "Gdy wykonasz działania, takie jak logowanie czy aktualizacja konta, pojawią się tutaj."
+    }
+  },
+  "auth": {
+    "signinTitle": "Zaloguj się na swoje konto",
+    "signupTitle": "Utwórz konto",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Wpisz swój email",
+    "passwordLabel": "Hasło",
+    "passwordPlaceholder": "Wpisz swoje hasło",
+    "loading": "Ładowanie...",
+    "signinButton": "Zaloguj się",
+    "signupButton": "Zarejestruj się",
+    "newHere": "Nowy w naszej platformie?",
+    "existingUser": "Masz już konto?",
+    "createAccount": "Utwórz konto",
+    "signinExisting": "Zaloguj się na istniejące konto"
+  }
+}

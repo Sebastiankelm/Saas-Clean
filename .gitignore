@@ -36,6 +36,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vscode
+packages/cms/content.config.js
+packages/cms/content.config.d.ts
+packages/cms/.content-collections/cache
 
 # Docker
 postgres_data/
@@ -45,5 +48,6 @@ postgres_data/
 
 # turbo
 /.turbo
+**/.turbo
 **/node_modules
 

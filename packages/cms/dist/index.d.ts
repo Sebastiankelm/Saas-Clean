@@ -1,0 +1,12 @@
+import { allBlogs, allFaqs, allTestimonials, allFeatures } from '../.content-collections/generated/index.js';
+type Locale = 'en' | 'pl';
+type BlogEntry = (typeof allBlogs)[number];
+type FaqEntry = (typeof allFaqs)[number];
+type TestimonialEntry = (typeof allTestimonials)[number];
+type FeatureEntry = (typeof allFeatures)[number];
+export declare function getBlogPosts(locale: string): BlogEntry[];
+export declare function getFaqEntries(locale: string): FaqEntry[];
+export declare function getTestimonials(locale: string): TestimonialEntry[];
+export declare function getFeatures(locale: string): FeatureEntry[];
+export type { BlogEntry, FaqEntry, TestimonialEntry, FeatureEntry };
+export type { Locale };

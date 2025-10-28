@@ -1,0 +1,9 @@
+{
+  "title": "Pricing experiments without downtime",
+  "slug": "pricing-experiments",
+  "excerpt": "Iterate on subscriptions, coupons, and add-ons using Stripe billing primitives ready to deploy.",
+  "locale": "en",
+  "publishedAt": "2024-12-15",
+  "author": "Nina Patel",
+  "readTimeMinutes": 4
+}

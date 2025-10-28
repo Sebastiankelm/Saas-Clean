@@ -1,0 +1,209 @@
+{
+  "language": {
+    "label": "Choose language",
+    "options": {
+      "en": "English",
+      "pl": "Polski"
+    }
+  },
+  "navigation": {
+    "brand": "ACME",
+    "links": {
+      "pricing": "Pricing",
+      "signUp": "Sign Up",
+      "dashboard": "Dashboard"
+    },
+    "actions": {
+      "signOut": "Sign out"
+    }
+  },
+  "marketing": {
+    "hero": {
+      "title": "Build Your SaaS",
+      "highlight": "Faster Than Ever",
+      "description": "Launch your SaaS product in record time with our powerful, ready-to-use template. Packed with modern technologies and essential integrations.",
+      "cta": "Deploy your own"
+    },
+    "features": {
+      "nextjs": {
+        "title": "Next.js and React",
+        "description": "Leverage the power of modern web technologies for optimal performance and developer experience."
+      },
+      "postgres": {
+        "title": "Postgres and Drizzle ORM",
+        "description": "Robust database solution with an intuitive ORM for efficient data management and scalability."
+      },
+      "stripe": {
+        "title": "Stripe Integration",
+        "description": "Seamless payment processing and subscription management with industry-leading Stripe integration."
+      }
+    },
+    "cta": {
+      "title": "Ready to launch your SaaS?",
+      "description": "Our template provides everything you need to get your SaaS up and running quickly. Don't waste time on boilerplate - focus on what makes your product unique.",
+      "action": "View the code"
+    },
+    "testimonials": {
+      "title": "Loved by fast-moving SaaS teams",
+      "description": "Hear how product leaders ship faster with the Saas Clean starter."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "description": "Everything you need to know before launching."
+    },
+    "blog": {
+      "title": "Latest from the blog",
+      "description": "Product lessons, release notes, and growth tips from our team."
+    }
+  },
+  "terminal": {
+    "steps": [
+      "git clone https://github.com/nextjs/saas-starter",
+      "pnpm install",
+      "pnpm db:setup",
+      "pnpm db:migrate",
+      "pnpm db:seed",
+      "pnpm dev 🎉"
+    ],
+    "copy": "Copy to clipboard"
+  },
+  "pricing": {
+    "trial": "with {days} day free trial",
+    "interval": {
+      "month": "per user / month",
+      "year": "per user / year"
+    },
+    "plans": {
+      "base": {
+        "name": "Base",
+        "features": [
+          "Unlimited Usage",
+          "Unlimited Workspace Members",
+          "Email Support"
+        ]
+      },
+      "plus": {
+        "name": "Plus",
+        "features": [
+          "Everything in Base, and:",
+          "Early Access to New Features",
+          "24/7 Support + Slack Access"
+        ]
+      }
+    },
+    "button": {
+      "label": "Get Started",
+      "loading": "Loading..."
+    }
+  },
+  "dashboard": {
+    "title": "Team Settings",
+    "navigation": {
+      "team": "Team",
+      "general": "General",
+      "activity": "Activity",
+      "security": "Security",
+      "title": "Settings",
+      "toggle": "Toggle sidebar"
+    },
+    "subscription": {
+      "title": "Team Subscription",
+      "currentPlan": "Current Plan: {plan}",
+      "free": "Free",
+      "manage": "Manage Subscription",
+      "status": {
+        "active": "Billed monthly",
+        "trialing": "Trial period",
+        "none": "No active subscription"
+      }
+    },
+    "members": {
+      "title": "Team Members",
+      "unknown": "Unknown User",
+      "empty": "No team members yet.",
+      "removing": "Removing...",
+      "remove": "Remove",
+      "removed": "Team member removed successfully"
+    },
+    "invite": {
+      "title": "Invite Team Member",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter email",
+      "roleLabel": "Role",
+      "roles": {
+        "member": "Member",
+        "owner": "Owner"
+      },
+      "invited": "Invitation sent successfully",
+      "submitting": "Inviting...",
+      "submit": "Invite Member",
+      "ownerOnly": "You must be a team owner to invite new members."
+    },
+    "general": {
+      "title": "General Settings",
+      "accountInfo": "Account Information",
+      "form": {
+        "nameLabel": "Name",
+        "namePlaceholder": "Enter your name",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Enter your email",
+        "saving": "Saving...",
+        "submit": "Save Changes",
+        "success": "Account updated successfully."
+      }
+    },
+    "security": {
+      "title": "Security Settings",
+      "password": {
+        "title": "Password",
+        "currentLabel": "Current Password",
+        "newLabel": "New Password",
+        "confirmLabel": "Confirm New Password",
+        "updating": "Updating...",
+        "submit": "Update Password"
+      },
+      "delete": {
+        "title": "Delete Account",
+        "description": "Account deletion is non-reversible. Please proceed with caution.",
+        "confirmLabel": "Confirm Password",
+        "deleting": "Deleting...",
+        "submit": "Delete Account"
+      }
+    },
+    "activity": {
+      "title": "Activity Log",
+      "recent": "Recent Activity",
+      "actions": {
+        "SIGN_UP": "You signed up",
+        "SIGN_IN": "You signed in",
+        "SIGN_OUT": "You signed out",
+        "UPDATE_PASSWORD": "You changed your password",
+        "DELETE_ACCOUNT": "You deleted your account",
+        "UPDATE_ACCOUNT": "You updated your account",
+        "CREATE_TEAM": "You created a new team",
+        "REMOVE_TEAM_MEMBER": "You removed a team member",
+        "INVITE_TEAM_MEMBER": "You invited a team member",
+        "ACCEPT_INVITATION": "You accepted an invitation",
+        "default": "An action occurred"
+      },
+      "fromIp": "from IP {ip}",
+      "emptyTitle": "No activity yet",
+      "emptyDescription": "When you perform actions like signing in or updating your account, they'll appear here."
+    }
+  },
+  "auth": {
+    "signinTitle": "Sign in to your account",
+    "signupTitle": "Create your account",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "loading": "Loading...",
+    "signinButton": "Sign in",
+    "signupButton": "Sign up",
+    "newHere": "New to our platform?",
+    "existingUser": "Already have an account?",
+    "createAccount": "Create an account",
+    "signinExisting": "Sign in to existing account"
+  }
+}

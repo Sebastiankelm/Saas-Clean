@@ -1,0 +1,7 @@
+{
+  "title": "Wbudowane subskrypcje Stripe",
+  "description": "Obsługuj triale, upgrady i faktury dzięki sprawdzonej integracji Stripe oraz webhookom.",
+  "locale": "pl",
+  "icon": "payments",
+  "order": 2
+}
