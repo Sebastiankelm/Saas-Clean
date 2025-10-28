@@ -21,6 +21,10 @@ export type NewInvitation = Database['public']['Tables']['invitations']['Insert'
 export type BillingCustomer = Database['public']['Tables']['billing_customers']['Row'];
 export type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 
+export type Invoice = Database['public']['Tables']['invoices']['Row'];
+export type NewInvoice = Database['public']['Tables']['invoices']['Insert'];
+export type UpdateInvoice = Database['public']['Tables']['invoices']['Update'];
+
 export type TeamMembershipSummary = Database['public']['Views']['team_memberships_mv']['Row'];
 export type TeamBillingSummary = Database['public']['Views']['team_billing_mv']['Row'];
 

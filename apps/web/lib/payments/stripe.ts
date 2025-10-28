@@ -215,3 +215,50 @@ export async function getStripeProducts() {
         : product.default_price?.id,
   }));
 }
+
+export async function getTeamInvoices(stripeCustomerId: string) {
+  const invoices = await stripe.invoices.list({
+    customer: stripeCustomerId,
+    limit: 100,
+  });
+
+  return invoices.data.map((invoice) => ({
+    id: invoice.id,
+    number: invoice.number,
+    status: invoice.status,
+    amountDue: invoice.amount_due,
+    amountPaid: invoice.amount_paid,
+    currency: invoice.currency,
+    billingReason: invoice.billing_reason,
+    hostedInvoiceUrl: invoice.hosted_invoice_url,
+    invoicePdf: invoice.invoice_pdf,
+    periodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : null,
+    periodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : null,
+    createdAt: new Date(invoice.created * 1000),
+  }));
+}
+
+export async function upsertInvoice(invoice: Stripe.Invoice, teamId: number) {
+  const { error } = await supabase.from('invoices').upsert(
+    {
+      team_id: teamId,
+      stripe_invoice_id: invoice.id,
+      stripe_subscription_id: typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id ?? null,
+      amount_due: invoice.amount_due,
+      amount_paid: invoice.amount_paid,
+      currency: invoice.currency,
+      status: invoice.status,
+      billing_reason: invoice.billing_reason ?? null,
+      hosted_invoice_url: invoice.hosted_invoice_url ?? null,
+      invoice_pdf: invoice.invoice_pdf ?? null,
+      period_start: invoice.period_start ? new Date(invoice.period_start * 1000).toISOString() : null,
+      period_end: invoice.period_end ? new Date(invoice.period_end * 1000).toISOString() : null,
+    },
+    { onConflict: 'stripe_invoice_id' }
+  );
+
+  if (error) {
+    console.error('Failed to upsert invoice', error);
+    throw error;
+  }
+}

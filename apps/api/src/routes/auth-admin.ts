@@ -4,7 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 import type { AppEnv } from '../types';
 import { requirePermission } from '../middleware/rbac';
-import { updateAuditContext } from '../utils/audit';
+import { updateAuditContext, markAuditSkipped } from '../utils/audit';
 
 const authAdminRouter = new Hono<AppEnv>();
 
@@ -77,7 +77,7 @@ const recordAuditEntry = async (
   supabase: ReturnType<typeof ensureClient>,
   actorAdminUserId: string | null,
   eventType: string,
-  resourceIdentifier: string,
+  resourceId: string,
   previousValues: unknown,
   newValues: unknown,
   metadata?: Record<string, unknown>
@@ -86,7 +86,7 @@ const recordAuditEntry = async (
     actor_user_id: actorAdminUserId,
     event_type: eventType,
     resource_type: 'admin.users',
-    resource_identifier: resourceIdentifier,
+    resource_identifier: resourceId,
     previous_values: previousValues ?? null,
     new_values: newValues ?? null,
     metadata: metadata ?? null,
@@ -239,6 +239,538 @@ authAdminRouter.patch(
     );
 
     return c.json({ user: data });
+  }
+);
+
+// =============================================================================
+// SUPABASE AUTH USER MANAGEMENT
+// =============================================================================
+
+const banUserSchema = z.object({
+  until: z.string().optional(), // ISO date string
+  reason: z.string().optional(),
+});
+
+const updateAuthUserSchema = z.object({
+  email: z.string().email().optional(),
+  banUntil: z.string().optional(),
+  confirmed: z.boolean().optional(),
+  role: z.string().optional(),
+  userMetadata: z.record(z.any()).optional(),
+  appMetadata: z.record(z.any()).optional(),
+});
+
+authAdminRouter.get(
+  '/auth-users',
+  requirePermission({ permission: 'system.user_management' }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const page = Number.parseInt(c.req.query('page') ?? '1', 10);
+    const perPage = Number.parseInt(c.req.query('perPage') ?? '50', 10);
+
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      throw new HTTPException(500, { message: 'Failed to list auth users.' });
+    }
+
+    markAuditSkipped(c);
+    return c.json({ users: data.users, total: data.total });
+  }
+);
+
+authAdminRouter.get(
+  '/auth-users/:id',
+  requirePermission({ permission: 'system.user_management' }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+
+    if (error) {
+      throw new HTTPException(404, { message: 'Auth user not found.' });
+    }
+
+    markAuditSkipped(c);
+    return c.json({ user: data.user });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/ban',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    const supabase = ensureClient(c);
+    const actor = c.get('actor');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+    const payload = banUserSchema.parse(await c.req.json());
+    
+    // Prevent self-ban
+    if (id === actor?.authUserId) {
+      throw new HTTPException(400, { message: 'Cannot ban yourself.' });
+    }
+
+    const banUntil = payload.until ? new Date(payload.until).toISOString() : null;
+
+    // Update admin.users table to deactivate
+    const { data: adminUser } = await supabase
+      .schema('admin')
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', id)
+      .maybeSingle();
+
+    if (!adminUser) {
+      throw new HTTPException(404, { message: 'Admin user not found.' });
+    }
+
+    const { data, error } = await supabase
+      .schema('admin')
+      .from('users')
+      .update({ is_active: false })
+      .eq('id', adminUser.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.banned',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+      metadata: {
+        reason: payload.reason,
+        until: banUntil,
+      },
+    });
+
+    return c.json({ user: data.user });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/unban',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabase = ensureClient(c);
+    
+    if (!supabase) {
+      throw new HTTPException(500, { message: 'Supabase client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    // Find and activate admin user
+    const { data: adminUser } = await supabase
+      .schema('admin')
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', id)
+      .maybeSingle();
+
+    if (!adminUser) {
+      throw new HTTPException(404, { message: 'Admin user not found.' });
+    }
+
+    const { data, error } = await supabase
+      .schema('admin')
+      .from('users')
+      .update({ is_active: true })
+      .eq('id', adminUser.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.unbanned',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+    });
+
+    return c.json({ user: data });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/verify',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+      email_confirm: true,
+    });
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.verified',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+    });
+
+    return c.json({ user: data.user });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/reset-password',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+    const { redirectTo } = await c.req.json();
+
+    // Get user email first
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(id);
+    
+    if (!userData.user?.email) {
+      throw new HTTPException(400, { message: 'User email not found.' });
+    }
+
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: userData.user.email,
+      options: {
+        redirectTo: redirectTo || undefined,
+      },
+    });
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.password_reset',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+    });
+
+    return c.json({ link: data.properties?.action_link });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/delete',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    const actor = c.get('actor');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    // Prevent self-delete
+    if (id === actor?.authUserId) {
+      throw new HTTPException(400, { message: 'Cannot delete yourself.' });
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.deleted',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+    });
+
+    return c.json({ success: true });
+  }
+);
+
+authAdminRouter.patch(
+  '/auth-users/:id',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    const actor = c.get('actor');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+    const payload = updateAuthUserSchema.parse(await c.req.json());
+
+    const updateData: {
+      email?: string;
+      ban_until?: string | null;
+      email_confirm?: boolean;
+      role?: string;
+      user_metadata?: Record<string, unknown>;
+      app_metadata?: Record<string, unknown>;
+    } = {};
+
+    if (payload.email !== undefined) {
+      updateData.email = payload.email;
+    }
+    if (payload.banUntil !== undefined) {
+      updateData.ban_until = payload.banUntil || null;
+    }
+    if (payload.confirmed !== undefined) {
+      updateData.email_confirm = payload.confirmed;
+    }
+    if (payload.role !== undefined) {
+      updateData.role = payload.role;
+    }
+    if (payload.userMetadata !== undefined) {
+      updateData.user_metadata = payload.userMetadata;
+    }
+    if (payload.appMetadata !== undefined) {
+      updateData.app_metadata = payload.appMetadata;
+    }
+
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(id, updateData);
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.updated',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+      newValues: updateData,
+    });
+
+    return c.json({ user: data.user });
+  }
+);
+
+// Get user sessions (get user and return session info from metadata)
+authAdminRouter.get(
+  '/auth-users/:id/sessions',
+  requirePermission({ permission: 'system.user_management' }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+
+    if (error) {
+      throw new HTTPException(500, { message: error.message });
+    }
+
+    // Return session info from user data
+    markAuditSkipped(c);
+    return c.json({ 
+      sessions: data.user?.app_metadata?.sessions || [],
+      user: data.user
+    });
+  }
+);
+
+// Sign out user from all sessions
+authAdminRouter.post(
+  '/auth-users/:id/signout-all',
+  requirePermission({ permission: 'system.user_management', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const id = c.req.param('id');
+
+    const { error } = await supabaseAdmin.auth.admin.signOut(id, 'global');
+
+    if (error) {
+      throw new HTTPException(400, { message: error.message });
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.signed_out_all',
+      resourceType: 'auth.user',
+      resourceIdentifier: id,
+    });
+
+    return c.json({ success: true });
+  }
+);
+
+// Grant/Revoke admin access (via app_metadata)
+authAdminRouter.post(
+  '/auth-users/:id/grant-admin-access',
+  requirePermission({ permission: 'system.roles.manage', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    const supabase = ensureClient(c);
+    const actor = c.get('actor');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const authUserId = c.req.param('id');
+    const payload = await c.req.json();
+
+    // Update auth user app_metadata
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+      app_metadata: {
+        supamode_access: true,
+      },
+    });
+
+    if (authError) {
+      throw new HTTPException(400, { message: authError.message });
+    }
+
+    // Get or create admin user record
+    const { data: existingAdmin } = await supabase
+      .schema('admin')
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
+
+    let adminUserId = existingAdmin?.id;
+
+    if (!adminUserId) {
+      // Create admin user record using RPC function
+      // We need to get app_user_id from public.users first
+      const { data: publicUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', authUserId)
+        .maybeSingle();
+
+      if (publicUser) {
+        const { error: createError } = await supabase.rpc('admin.grant_admin_access', {
+          p_app_user_id: publicUser.id,
+          p_role_id: payload.roleId || null,
+        });
+
+        if (createError) {
+          console.error('Failed to create admin user:', createError);
+        } else {
+          // Fetch the newly created admin user
+          const { data: newAdminUser } = await supabase
+            .schema('admin')
+            .from('users')
+            .select('id')
+            .eq('app_user_id', publicUser.id)
+            .maybeSingle();
+          
+          adminUserId = newAdminUser?.id;
+        }
+      }
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.admin_access_granted',
+      resourceType: 'auth.user',
+      resourceIdentifier: authUserId,
+      metadata: {
+        roleId: payload.roleId,
+      },
+    });
+
+    return c.json({ user: authUser.user, adminUserId });
+  }
+);
+
+authAdminRouter.post(
+  '/auth-users/:id/revoke-admin-access',
+  requirePermission({ permission: 'system.roles.manage', sensitive: true }),
+  async (c) => {
+    const supabaseAdmin = c.get('supabaseAdmin');
+    const supabase = ensureClient(c);
+    const actor = c.get('actor');
+    
+    if (!supabaseAdmin) {
+      throw new HTTPException(500, { message: 'Supabase admin client is not available.' });
+    }
+
+    const authUserId = c.req.param('id');
+
+    // Prevent self-revoke
+    if (authUserId === actor?.authUserId) {
+      throw new HTTPException(400, { message: 'Cannot revoke your own admin access.' });
+    }
+
+    // Update auth user app_metadata
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+      app_metadata: {
+        supamode_access: false,
+      },
+    });
+
+    if (authError) {
+      throw new HTTPException(400, { message: authError.message });
+    }
+
+    // Optionally deactivate or delete admin user record
+    // For now, we'll just deactivate
+    const { data: adminUser } = await supabase
+      .schema('admin')
+      .from('users')
+      .select('id')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle();
+
+    if (adminUser) {
+      await supabase
+        .schema('admin')
+        .from('users')
+        .update({ is_active: false })
+        .eq('id', adminUser.id);
+    }
+
+    updateAuditContext(c, {
+      eventType: 'auth.user.admin_access_revoked',
+      resourceType: 'auth.user',
+      resourceIdentifier: authUserId,
+    });
+
+    return c.json({ success: true });
   }
 );
 

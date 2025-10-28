@@ -11,6 +11,7 @@ import dashboardsRouter from './routes/dashboards';
 import authAdminRouter from './routes/auth-admin';
 import storageRouter from './routes/storage';
 import auditRouter from './routes/audit';
+import rbacRouter from './routes/rbac';
 
 const app = new Hono<AppEnv>();
 
@@ -32,5 +33,6 @@ app.route('/dashboards', dashboardsRouter);
 app.route('/auth-admin', authAdminRouter);
 app.route('/storage', storageRouter);
 app.route('/audit', auditRouter);
+app.route('/rbac', rbacRouter);
 
 export default app;

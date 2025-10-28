@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { env } from '@/config/env';
-import { handleSubscriptionChange, stripe } from '@/lib/payments/stripe';
+import { handleSubscriptionChange, stripe, upsertInvoice } from '@/lib/payments/stripe';
+import { getTeamByStripeCustomerId } from '@/lib/db/queries';
 
 const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
@@ -26,6 +27,22 @@ export async function POST(request: NextRequest) {
     case 'customer.subscription.deleted':
       const subscription = event.data.object as Stripe.Subscription;
       await handleSubscriptionChange(subscription);
+      break;
+    case 'invoice.paid':
+    case 'invoice.payment_failed':
+    case 'invoice.upcoming':
+    case 'invoice.created':
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+      
+      if (customerId) {
+        const team = await getTeamByStripeCustomerId(customerId);
+        if (team) {
+          await upsertInvoice(invoice, team.id);
+        } else {
+          console.error('Team not found for invoice customer:', customerId);
+        }
+      }
       break;
     default:
       console.log(`Unhandled event type ${event.type}`);

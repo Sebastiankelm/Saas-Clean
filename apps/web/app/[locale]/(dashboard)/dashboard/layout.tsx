@@ -4,7 +4,7 @@ import { Button } from '@saas-clean/ui';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Settings, Shield, Activity, Menu } from 'lucide-react';
+import { Users, Settings, Shield, Activity, Menu, FileText, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useLocaleContext } from '../../LocaleProvider';
 
@@ -22,7 +22,9 @@ export default function DashboardLayout({
     () => [
       { href: `/${locale}/dashboard`, icon: Users, label: t('team') },
       { href: `/${locale}/dashboard/general`, icon: Settings, label: t('general') },
+      { href: `/${locale}/dashboard/billing`, icon: FileText, label: t('billing') },
       { href: `/${locale}/dashboard/activity`, icon: Activity, label: t('activity') },
+      { href: `/${locale}/dashboard/privacy`, icon: Lock, label: t('privacy') },
       { href: `/${locale}/dashboard/security`, icon: Shield, label: t('security') },
     ],
     [locale, t]
