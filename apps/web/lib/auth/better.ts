@@ -1,5 +1,4 @@
 import { betterAuth, type InferAPI, APIError } from 'better-auth';
-import { nextCookies } from 'better-auth/integrations/next-js';
 import { organization } from 'better-auth/plugins/organization';
 import { Pool } from 'pg';
 import { PostgresDialect } from 'kysely';
@@ -55,7 +54,7 @@ const authInstance = betterAuth({
       },
     },
   },
-  integrations: [nextCookies()],
+  integrations: [],
   plugins: [
     organization({
       teams: {

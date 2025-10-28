@@ -1,12 +1,11 @@
 openapi: 3.1.0
 info:
-  title: Supamode Admin API
-  version: 0.1.0
+  title: SaaS Clean Admin API
+  version: 1.0.0
   description: |
-    HTTP API for the Supamode administrative console. The API is protected by Supabase
-    JWT tokens that include the `supamode_access` metadata flag and enforces RBAC via
-    Supabase stored procedures. MFA or Captcha validation is required for sensitive
-    mutations. All mutating operations emit audit log entries to `admin.audit_log`.
+    HTTP API for the SaaS Clean administrative console. The API is protected by Better Auth
+    JWT tokens and enforces RBAC via database policies. Rate limiting, CORS, and security headers
+    are applied globally. All mutating operations emit audit log entries to `activity_logs`.
 servers:
   - url: https://api.example.com
     description: Production
@@ -715,16 +714,6 @@ components:
         preferences:
           type: object
           additionalProperties: true
-        roleIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-        roleIds:
-          type: array
-          items:
-            type: string
-            format: uuid
         roleIds:
           type: array
           items:
