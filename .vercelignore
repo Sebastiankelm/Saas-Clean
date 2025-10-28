@@ -1,33 +1,16 @@
-# Ignore apps/api - it's a separate Hono app, not part of Next.js
-apps/api/
-apps/api/**/*
+# Only ignore the apps/api source code to prevent it from being deployed as functions
+apps/api/src/
+apps/api/tsconfig.json
+apps/api/playwright.config.ts
 
-# Ignore root node_modules (monorepo)
-node_modules/
-
-# Ignore other apps (keep only web)
+# Ignore other apps
 apps/app/
 
-# Ignore build artifacts
+# Ignore build artifacts (but not .next in apps/web!)
 dist/
-.next/
 build/
 *.log
 
-# Ignore test files
-**/*.test.ts
-**/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
-tests/
-**/__tests__/
-
-# Ignore docs and scripts
+# Ignore docs
 docs/
-scripts/
-
-# Ignore config files from other apps
-apps/api/tsconfig.json
-apps/api/package.json
-apps/api/vitest.config.ts
 
