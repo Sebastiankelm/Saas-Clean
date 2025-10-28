@@ -560,3 +560,64 @@ The goal is to deliver a unified administrative console and low-code CMS that si
 - **Deployment workflow:** Connect the GitHub repo, let Vercel run builds for each project, and verify preview deployments before promoting to production. Continue running migrations via Supabase CLI or CI jobs; Vercel projects only host static/front-end and serverless layers.
 - **Post-deploy checks:** Validate CORS, confirm API routes are reachable from the frontend, and monitor Supabase logs for connection pool saturation. Keep environment secrets in sync across preview and production projects as you roll out new features.
 
+## 22. Adaptive Implementation Plan
+
+The following workstreams assume the architecture, schemas, and conventions in this document remain authoritative. Each task adapts to the existing boundaries—adding capabilities by extending current packages, services, and UI surfaces rather than restructuring them.
+
+1. **Database Enhancements (Supabase migrations)**
+   - Extend the existing migration set under `supabase/migrations` to materialize any tables, triggers, or helper functions described above that are not yet present (e.g., `admin.audit_log`, `cms.entry_versions`).
+   - Augment current RLS policies and helper views to align with the permission atoms in §4 without altering the established schema layout.
+
+2. **Seed Template Consolidation (`packages/schema`)**
+   - Build out the seed generator templates (`solo`, `small-team`, `saas`, `custom`) inside `packages/schema/src/templates/`, reusing the current generator base classes and outputting SQL compatible with the migrations pipeline.
+   - Wire the `pnpm run generate-schema` CLI so it emits seeds into `apps/app/supabase/seeds` while respecting the existing CLI contract and flags.
+
+3. **Auth & RBAC Middleware (`apps/api`, `apps/app`)**
+   - In the Hono API, insert middleware that invokes `supamode.verify_supamode_access()` and resolves permissions through the already defined RBAC helpers, caching lookups without bypassing current security layers.
+   - On the frontend, extend the Better Auth integration to enforce MFA/captcha requirements laid out in §4.4 by enhancing current layout guards and authentication settings screens.
+
+4. **Core API Modules (Hono routes)**
+   - Flesh out route registries under `apps/api/src/routes` for `/data`, `/cms`, `/dashboards`, `/auth-admin`, `/storage`, and `/audit`, each delegating to service classes within the corresponding `packages/*` modules.
+   - Share Zod DTOs via the existing shared packages instead of redefining types per route.
+
+5. **Data Explorer UI (`apps/app/app/(dashboard)/data`)**
+   - Implement the virtualized grid, filter builder, saved views, and record drawers by enhancing the current React components and hooks so they consume the Data Explorer API described in §6.1–§6.3.
+   - Ensure batch actions, audit history, and global search reuse the established design system (shadcn/ui, Tailwind tokens) without introducing parallel component libraries.
+
+6. **CMS Authoring Tools (`apps/app/app/(dashboard)/cms`)**
+   - Expand the existing CMS routes to include the collection designer, entry workflow controls, localization toggles, and media picker flow while persisting data through the CMS API built in task 4.
+   - Integrate workflow status changes with audit logging hooks rather than creating new event subsystems.
+
+7. **Dashboard Builder (`apps/app/app/(dashboard)/dashboards`)**
+   - Compose the widget wizard, drag-and-drop grid, and role-sharing controls using current layout primitives and React Query bridges so state management stays consistent with the rest of the dashboard shell.
+   - Persist widget definitions through the dashboards service without modifying the `dashboards` schema structure.
+
+8. **Users Explorer & Admin Utilities (`apps/app/app/(dashboard)/users`)**
+   - Enhance the Users Explorer list, detail panes, and action toolbar to match §6.6, calling the `/auth-admin` routes and enforcing permission checks with the RBAC helpers.
+   - Add the Grant Admin Access confirmation flow as a modal layered on top of the existing routing stack.
+
+9. **Storage Explorer Integration (`apps/app/app/(dashboard)/assets`)**
+   - Leverage the shared StorageService to power file browsing, uploads, search, and picker dialogs, keeping the `/assets` route composition intact.
+   - Respect configured bucket/path permissions from the RBAC system rather than adding bespoke access checks.
+
+10. **Audit Log Explorer (`apps/app/app/(dashboard)/logs`)**
+    - Implement filters, detail drawers, and monitoring widgets by extending the existing logs route and consuming the `/audit` API endpoints without changing audit table design.
+
+11. **Plugin Framework (`packages/plugins`, `apps/app/src/plugins`, `apps/api/src/plugins`)**
+    - Populate the service and client plugin registries with typed helpers, ensuring they register during boot via existing plugin initialization hooks.
+    - Ship a reference plugin (e.g., user badge) that reuses the documented plugin contracts and data transformers.
+
+12. **Shared Package Guidelines (`packages/*`)**
+    - Document and enforce the export boundaries outlined in §19 by adding lint rules or tests that catch cross-runtime imports, keeping package structure untouched.
+
+13. **Testing Matrix (`apps/*`, `packages/*`)**
+    - Author unit, integration, and E2E tests using the current Vitest/Playwright setup, targeting the behaviors described in §12 without restructuring the test harness.
+
+14. **CI/CD Extensions (`.github/workflows`, `turbo.json`)**
+    - Extend existing GitHub Actions to run new test suites, supabase migrations, and typegen steps while preserving the current pipeline layout.
+
+15. **Documentation & Onboarding (`docs/`)**
+    - Keep this architecture guide as the single source of truth; supplement it with quickstart snippets, troubleshooting notes, and plugin authoring walkthroughs that reference the same module boundaries.
+
+Each task is intentionally scoped to slot into the documented architecture, leaning on current schemas, packages, and tooling so the implementation remains aligned with the established system design.
+
