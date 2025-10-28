@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": [
+      "node"
+    ],
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@supabase-db": [
+        "../../supabase/types"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "../../supabase/types.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}
