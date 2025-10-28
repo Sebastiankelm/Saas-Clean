@@ -1,3 +1,9 @@
+// Load environment variables from .env.local
+import { config } from 'dotenv';
+
+// Load .env.local file - when run via pnpm --filter, process.cwd() is apps/web
+config({ path: '.env.local' });
+
 import { stripe } from '../payments/stripe';
 import { getSupabaseAdminClient } from './client';
 import { hashPassword } from '@/lib/auth/session';
