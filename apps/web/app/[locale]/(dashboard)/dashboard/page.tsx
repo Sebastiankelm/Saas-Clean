@@ -1,27 +1,30 @@
 'use client';
 
 import {
-  Button,
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Button,
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
   Input,
+  Label,
   RadioGroup,
   RadioGroupItem,
-  Label,
 } from '@saas-clean/ui';
 import { customerPortalAction } from '@/lib/payments/actions';
-import { useActionState } from 'react';
-import { TeamDataWithMembers, User } from '@/lib/db/schema';
-import { removeTeamMember, inviteTeamMember } from '@/app/(login)/actions';
+import { useActionState, Suspense } from 'react';
 import useSWR from 'swr';
-import { Suspense } from 'react';
+import type { TeamDataWithMembers, User } from '@/lib/db/schema';
+import {
+  inviteTeamMember,
+  removeTeamMember,
+} from '@/app/[locale]/(auth)/actions';
 import { Loader2, PlusCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 type ActionState = {
   error?: string;
@@ -31,10 +34,11 @@ type ActionState = {
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function SubscriptionSkeleton() {
+  const t = useTranslations('dashboard.subscription');
   return (
     <Card className="mb-8 h-[140px]">
       <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
     </Card>
   );
@@ -42,30 +46,38 @@ function SubscriptionSkeleton() {
 
 function ManageSubscription() {
   const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
+  const t = useTranslations('dashboard.subscription');
+  const status = teamData?.billingSummary?.subscription_status;
+
+  const statusLabel = (() => {
+    if (status === 'active') {
+      return t('status.active');
+    }
+    if (status === 'trialing') {
+      return t('status.trialing');
+    }
+    return t('status.none');
+  })();
 
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-           <div className="mb-4 sm:mb-0">
-              <p className="font-medium">
-                Current Plan: {teamData?.billingSummary?.plan_name || 'Free'}
+          <div className="flex flex-col items-start justify-between sm:flex-row sm:items-center">
+            <div className="mb-4 sm:mb-0">
+              <p className="font-medium text-gray-900 dark:text-white">
+                {t('currentPlan', {
+                  plan: teamData?.billingSummary?.plan_name || t('free'),
+                })}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {teamData?.billingSummary?.subscription_status === 'active'
-                  ? 'Billed monthly'
-                  : teamData?.billingSummary?.subscription_status === 'trialing'
-                  ? 'Trial period'
-                  : 'No active subscription'}
-              </p>
+              <p className="text-sm text-muted-foreground">{statusLabel}</p>
             </div>
             <form action={customerPortalAction}>
-              <Button type="submit" variant="outline">
-                Manage Subscription
+              <Button type="submit" variant="outline" className="rounded-full">
+                {t('manage')}
               </Button>
             </form>
           </div>
@@ -76,18 +88,19 @@ function ManageSubscription() {
 }
 
 function TeamMembersSkeleton() {
+  const t = useTranslations('dashboard.members');
   return (
     <Card className="mb-8 h-[140px]">
       <CardHeader>
-        <CardTitle>Team Members</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="animate-pulse space-y-4 mt-1">
+        <div className="mt-1 space-y-4 animate-pulse">
           <div className="flex items-center space-x-4">
-            <div className="size-8 rounded-full bg-gray-200"></div>
+            <div className="size-8 rounded-full bg-gray-200 dark:bg-gray-800" />
             <div className="space-y-2">
-              <div className="h-4 w-32 bg-gray-200 rounded"></div>
-              <div className="h-3 w-14 bg-gray-200 rounded"></div>
+              <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-800" />
+              <div className="h-3 w-14 rounded bg-gray-200 dark:bg-gray-800" />
             </div>
           </div>
         </div>
@@ -102,19 +115,20 @@ function TeamMembers() {
     ActionState,
     FormData
   >(removeTeamMember, {});
+  const t = useTranslations('dashboard.members');
 
   const getUserDisplayName = (user: Pick<User, 'id' | 'name' | 'email'>) => {
-    return user.name || user.email || 'Unknown User';
+    return user.name || user.email || t('unknown');
   };
 
   if (!teamData?.teamMembers?.length) {
     return (
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No team members yet.</p>
+          <p className="text-muted-foreground">{t('empty')}</p>
         </CardContent>
       </Card>
     );
@@ -123,7 +137,7 @@ function TeamMembers() {
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle>Team Members</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="space-y-4">
@@ -131,15 +145,7 @@ function TeamMembers() {
             <li key={member.id} className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Avatar>
-                  {/* 
-                    This app doesn't save profile images, but here
-                    is how you'd show them:
-
-                    <AvatarImage
-                      src={member.user.image || ''}
-                      alt={getUserDisplayName(member.user)}
-                    />
-                  */}
+                  <AvatarImage alt={getUserDisplayName(member.user)} />
                   <AvatarFallback>
                     {getUserDisplayName(member.user)
                       .split(' ')
@@ -148,10 +154,10 @@ function TeamMembers() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">
+                  <p className="font-medium text-gray-900 dark:text-white">
                     {getUserDisplayName(member.user)}
                   </p>
-                  <p className="text-sm text-muted-foreground capitalize">
+                  <p className="text-sm capitalize text-muted-foreground">
                     {member.role}
                   </p>
                 </div>
@@ -163,9 +169,10 @@ function TeamMembers() {
                     type="submit"
                     variant="outline"
                     size="sm"
+                    className="rounded-full"
                     disabled={isRemovePending}
                   >
-                    {isRemovePending ? 'Removing...' : 'Remove'}
+                    {isRemovePending ? t('removing') : t('remove')}
                   </Button>
                 </form>
               ) : null}
@@ -173,7 +180,10 @@ function TeamMembers() {
           ))}
         </ul>
         {removeState?.error && (
-          <p className="text-red-500 mt-4">{removeState.error}</p>
+          <p className="mt-4 text-sm text-red-500">{removeState.error}</p>
+        )}
+        {removeState?.success && (
+          <p className="mt-4 text-sm text-green-500">{t('removed')}</p>
         )}
       </CardContent>
     </Card>
@@ -181,10 +191,11 @@ function TeamMembers() {
 }
 
 function InviteTeamMemberSkeleton() {
+  const t = useTranslations('dashboard.invite');
   return (
     <Card className="h-[260px]">
       <CardHeader>
-        <CardTitle>Invite Team Member</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
     </Card>
   );
@@ -197,65 +208,66 @@ function InviteTeamMember() {
     ActionState,
     FormData
   >(inviteTeamMember, {});
+  const t = useTranslations('dashboard.invite');
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invite Team Member</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={inviteAction} className="space-y-4">
           <div>
             <Label htmlFor="email" className="mb-2">
-              Email
+              {t('emailLabel')}
             </Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="Enter email"
+              placeholder={t('emailPlaceholder')}
               required
               disabled={!isOwner}
             />
           </div>
           <div>
-            <Label>Role</Label>
+            <Label>{t('roleLabel')}</Label>
             <RadioGroup
               defaultValue="member"
               name="role"
-              className="flex space-x-4"
+              className="mt-2 flex space-x-4"
               disabled={!isOwner}
             >
-              <div className="flex items-center space-x-2 mt-2">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="member" id="member" />
-                <Label htmlFor="member">Member</Label>
+                <Label htmlFor="member">{t('roles.member')}</Label>
               </div>
-              <div className="flex items-center space-x-2 mt-2">
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="owner" id="owner" />
-                <Label htmlFor="owner">Owner</Label>
+                <Label htmlFor="owner">{t('roles.owner')}</Label>
               </div>
             </RadioGroup>
           </div>
           {inviteState?.error && (
-            <p className="text-red-500">{inviteState.error}</p>
+            <p className="text-sm text-red-500">{inviteState.error}</p>
           )}
           {inviteState?.success && (
-            <p className="text-green-500">{inviteState.success}</p>
+            <p className="text-sm text-green-500">{t('invited')}</p>
           )}
           <Button
             type="submit"
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="rounded-full bg-orange-500 text-white hover:bg-orange-600"
             disabled={isInvitePending || !isOwner}
           >
             {isInvitePending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Inviting...
+                {t('submitting')}
               </>
             ) : (
               <>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Invite Member
+                {t('submit')}
               </>
             )}
           </Button>
@@ -263,9 +275,7 @@ function InviteTeamMember() {
       </CardContent>
       {!isOwner && (
         <CardFooter>
-          <p className="text-sm text-muted-foreground">
-            You must be a team owner to invite new members.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('ownerOnly')}</p>
         </CardFooter>
       )}
     </Card>
@@ -273,9 +283,12 @@ function InviteTeamMember() {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('dashboard');
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium mb-6">Team Settings</h1>
+    <section className="flex-1 bg-white p-4 dark:bg-gray-950 lg:p-8">
+      <h1 className="mb-6 text-lg font-medium text-gray-900 dark:text-white lg:text-2xl">
+        {t('title')}
+      </h1>
       <Suspense fallback={<SubscriptionSkeleton />}>
         <ManageSubscription />
       </Suspense>

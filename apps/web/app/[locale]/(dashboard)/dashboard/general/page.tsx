@@ -9,14 +9,12 @@ import {
   CardTitle,
   Label,
 } from '@saas-clean/ui';
-import { useActionState } from 'react';
+import { useActionState, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import { updateAccount } from '@/app/(login)/actions';
-import { User } from '@/lib/db/schema';
+import { updateAccount } from '@/app/[locale]/(auth)/actions';
+import type { User } from '@/lib/db/schema';
 import useSWR from 'swr';
-import { Suspense } from 'react';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useTranslations } from 'next-intl';
 
 type ActionState = {
   name?: string;
@@ -30,34 +28,37 @@ type AccountFormProps = {
   emailValue?: string;
 };
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 function AccountForm({
   state,
   nameValue = '',
-  emailValue = ''
+  emailValue = '',
 }: AccountFormProps) {
+  const t = useTranslations('dashboard.general.form');
   return (
     <>
       <div>
         <Label htmlFor="name" className="mb-2">
-          Name
+          {t('nameLabel')}
         </Label>
         <Input
           id="name"
           name="name"
-          placeholder="Enter your name"
+          placeholder={t('namePlaceholder')}
           defaultValue={state.name || nameValue}
           required
         />
       </div>
       <div>
         <Label htmlFor="email" className="mb-2">
-          Email
+          {t('emailLabel')}
         </Label>
         <Input
           id="email"
           name="email"
           type="email"
-          placeholder="Enter your email"
+          placeholder={t('emailPlaceholder')}
           defaultValue={emailValue}
           required
         />
@@ -82,16 +83,18 @@ export default function GeneralPage() {
     updateAccount,
     {}
   );
+  const t = useTranslations('dashboard.general');
+  const formTranslations = useTranslations('dashboard.general.form');
 
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
-        General Settings
+    <section className="flex-1 bg-white p-4 dark:bg-gray-950 lg:p-8">
+      <h1 className="mb-6 text-lg font-medium text-gray-900 dark:text-white lg:text-2xl">
+        {t('title')}
       </h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Account Information</CardTitle>
+          <CardTitle>{t('accountInfo')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" action={formAction}>
@@ -99,23 +102,25 @@ export default function GeneralPage() {
               <AccountFormWithData state={state} />
             </Suspense>
             {state.error && (
-              <p className="text-red-500 text-sm">{state.error}</p>
+              <p className="text-sm text-red-500">{state.error}</p>
             )}
             {state.success && (
-              <p className="text-green-500 text-sm">{state.success}</p>
+              <p className="text-sm text-green-500">
+                {formTranslations('success')}
+              </p>
             )}
             <Button
               type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="rounded-full bg-orange-500 text-white hover:bg-orange-600"
               disabled={isPending}
             >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {formTranslations('saving')}
                 </>
               ) : (
-                'Save Changes'
+                formTranslations('submit')
               )}
             </Button>
           </form>

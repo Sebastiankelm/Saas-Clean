@@ -22,6 +22,7 @@ import { getSupabaseAdminClient } from '@/lib/db/client';
 import { auth } from '@/lib/auth/better';
 import { headers } from 'next/headers';
 import { APIError } from 'better-auth';
+import { defaultLocale, locales, type Locale } from '@/src/i18n/config';
 
 const supabase = getSupabaseAdminClient();
 
@@ -58,11 +59,21 @@ async function refreshTeamViews() {
 const signInSchema = z.object({
   email: z.string().email().min(3).max(255),
   password: z.string().min(8).max(100),
+  locale: z.string().optional(),
 });
+
+function resolveLocale(value: string | null): Locale {
+  if (value && locales.includes(value as Locale)) {
+    return value as Locale;
+  }
+
+  return defaultLocale;
+}
 
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const { email, password } = data;
   const headerList = await headers();
+  const locale = resolveLocale(formData.get('locale') as string | null);
 
   try {
     await auth.api.signInEmail({
@@ -106,7 +117,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
       return createCheckoutSession({ team, priceId });
     }
 
-    redirect('/dashboard');
+    redirect(`/${locale}/dashboard`);
   } catch (error) {
     if (error instanceof APIError) {
       return {
@@ -129,11 +140,13 @@ const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   inviteId: z.string().optional(),
+  locale: z.string().optional(),
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const { email, password, inviteId } = data;
   const headerList = await headers();
+  const locale = resolveLocale(formData.get('locale') as string | null);
 
   let invitation: Invitation | null = null;
   const numericInviteId = inviteId ? Number(inviteId) : null;
@@ -270,7 +283,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     return createCheckoutSession({ team: createdTeam, priceId });
   }
 
-  redirect('/dashboard');
+  redirect(`/${locale}/dashboard`);
 });
 
 export async function signOut() {
@@ -350,7 +363,7 @@ const deleteAccountSchema = z.object({
 
 export const deleteAccount = validatedActionWithUser(
   deleteAccountSchema,
-  async (data, _, user) => {
+  async (data, formData, user) => {
     const { password } = data;
 
     const isPasswordValid = await comparePasswords(password, user.password_hash);
@@ -395,7 +408,8 @@ export const deleteAccount = validatedActionWithUser(
       console.error('Failed to clear Better Auth session during deletion', error);
     }
 
-    redirect('/sign-in');
+    const locale = resolveLocale(formData?.get('locale') as string | null);
+    redirect(`/${locale}/sign-in`);
   }
 );
 
