@@ -1,0 +1,33 @@
+# Ignore apps/api - it's a separate Hono app, not part of Next.js
+apps/api/
+apps/api/**/*
+
+# Ignore root node_modules (monorepo)
+node_modules/
+
+# Ignore other apps (keep only web)
+apps/app/
+
+# Ignore build artifacts
+dist/
+.next/
+build/
+*.log
+
+# Ignore test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+tests/
+**/__tests__/
+
+# Ignore docs and scripts
+docs/
+scripts/
+
+# Ignore config files from other apps
+apps/api/tsconfig.json
+apps/api/package.json
+apps/api/vitest.config.ts
+
