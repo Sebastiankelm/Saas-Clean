@@ -11,7 +11,9 @@ import {
 } from '@saas-clean/ui';
 import { Lock, Trash2, Loader2 } from 'lucide-react';
 import { useActionState } from 'react';
-import { updatePassword, deleteAccount } from '@/app/(login)/actions';
+import { updatePassword, deleteAccount } from '@/app/[locale]/(auth)/actions';
+import { useTranslations } from 'next-intl';
+import { useLocaleContext } from '../../../LocaleProvider';
 
 type PasswordState = {
   currentPassword?: string;
@@ -38,20 +40,26 @@ export default function SecurityPage() {
     FormData
   >(deleteAccount, {});
 
+  const t = useTranslations('dashboard.security');
+  const passwordTranslations = useTranslations('dashboard.security.password');
+  const deleteTranslations = useTranslations('dashboard.security.delete');
+  const { locale } = useLocaleContext();
+
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium bold text-gray-900 mb-6">
-        Security Settings
+    <section className="flex-1 bg-white p-4 dark:bg-gray-950 lg:p-8">
+      <h1 className="mb-6 text-lg font-medium text-gray-900 dark:text-white lg:text-2xl">
+        {t('title')}
       </h1>
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Password</CardTitle>
+          <CardTitle>{passwordTranslations('title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" action={passwordAction}>
+            <input type="hidden" name="locale" value={locale} />
             <div>
               <Label htmlFor="current-password" className="mb-2">
-                Current Password
+                {passwordTranslations('currentLabel')}
               </Label>
               <Input
                 id="current-password"
@@ -66,7 +74,7 @@ export default function SecurityPage() {
             </div>
             <div>
               <Label htmlFor="new-password" className="mb-2">
-                New Password
+                {passwordTranslations('newLabel')}
               </Label>
               <Input
                 id="new-password"
@@ -81,7 +89,7 @@ export default function SecurityPage() {
             </div>
             <div>
               <Label htmlFor="confirm-password" className="mb-2">
-                Confirm New Password
+                {passwordTranslations('confirmLabel')}
               </Label>
               <Input
                 id="confirm-password"
@@ -94,25 +102,25 @@ export default function SecurityPage() {
               />
             </div>
             {passwordState.error && (
-              <p className="text-red-500 text-sm">{passwordState.error}</p>
+              <p className="text-sm text-red-500">{passwordState.error}</p>
             )}
             {passwordState.success && (
-              <p className="text-green-500 text-sm">{passwordState.success}</p>
+              <p className="text-sm text-green-500">{passwordState.success}</p>
             )}
             <Button
               type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="rounded-full bg-orange-500 text-white hover:bg-orange-600"
               disabled={isPasswordPending}
             >
               {isPasswordPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  {passwordTranslations('updating')}
                 </>
               ) : (
                 <>
                   <Lock className="mr-2 h-4 w-4" />
-                  Update Password
+                  {passwordTranslations('submit')}
                 </>
               )}
             </Button>
@@ -122,16 +130,17 @@ export default function SecurityPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Delete Account</CardTitle>
+          <CardTitle>{deleteTranslations('title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Account deletion is non-reversable. Please proceed with caution.
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+            {deleteTranslations('description')}
           </p>
           <form action={deleteAction} className="space-y-4">
+            <input type="hidden" name="locale" value={locale} />
             <div>
               <Label htmlFor="delete-password" className="mb-2">
-                Confirm Password
+                {deleteTranslations('confirmLabel')}
               </Label>
               <Input
                 id="delete-password"
@@ -144,23 +153,23 @@ export default function SecurityPage() {
               />
             </div>
             {deleteState.error && (
-              <p className="text-red-500 text-sm">{deleteState.error}</p>
+              <p className="text-sm text-red-500">{deleteState.error}</p>
             )}
             <Button
               type="submit"
               variant="destructive"
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-full bg-red-600 text-white hover:bg-red-700"
               disabled={isDeletePending}
             >
               {isDeletePending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  {deleteTranslations('deleting')}
                 </>
               ) : (
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Account
+                  {deleteTranslations('submit')}
                 </>
               )}
             </Button>

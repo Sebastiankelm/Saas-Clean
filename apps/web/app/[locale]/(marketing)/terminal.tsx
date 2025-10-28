@@ -1,19 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function Terminal() {
   const [terminalStep, setTerminalStep] = useState(0);
   const [copied, setCopied] = useState(false);
-  const terminalSteps = [
-    'git clone https://github.com/nextjs/saas-starter',
-    'pnpm install',
-    'pnpm db:setup',
-    'pnpm db:migrate',
-    'pnpm db:seed',
-    'pnpm dev 🎉',
-  ];
+  const t = useTranslations('terminal');
+  const terminalSteps = useMemo(() => t.raw('steps') as string[], [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -23,7 +18,7 @@ export function Terminal() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [terminalStep]);
+  }, [terminalStep, terminalSteps]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(terminalSteps.join('\n'));
@@ -32,18 +27,18 @@ export function Terminal() {
   };
 
   return (
-    <div className="w-full rounded-lg shadow-lg overflow-hidden bg-gray-900 text-white font-mono text-sm relative">
+    <div className="relative w-full overflow-hidden rounded-lg bg-gray-900 text-sm font-mono text-white shadow-lg">
       <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex space-x-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="h-3 w-3 rounded-full bg-red-500" />
+            <div className="h-3 w-3 rounded-full bg-yellow-500" />
+            <div className="h-3 w-3 rounded-full bg-green-500" />
           </div>
           <button
             onClick={copyToClipboard}
-            className="text-gray-400 hover:text-white transition-colors"
-            aria-label="Copy to clipboard"
+            className="text-gray-400 transition-colors hover:text-white"
+            aria-label={t('copy')}
           >
             {copied ? (
               <Check className="h-5 w-5" />
@@ -56,7 +51,9 @@ export function Terminal() {
           {terminalSteps.map((step, index) => (
             <div
               key={index}
-              className={`${index > terminalStep ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              className={`${
+                index > terminalStep ? 'opacity-0' : 'opacity-100'
+              } transition-opacity duration-300`}
             >
               <span className="text-green-400">$</span> {step}
             </div>

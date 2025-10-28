@@ -1,8 +1,8 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
-import { getUser, getTeamForUser } from '@/lib/db/queries';
-import { SWRConfig } from 'swr';
+import { headers } from 'next/headers';
+import { defaultLocale, locales, type Locale } from '@/src/i18n/config';
 
 export const metadata: Metadata = {
   title: 'Next.js SaaS Starter',
@@ -15,29 +15,42 @@ export const viewport: Viewport = {
 
 const manrope = Manrope({ subsets: ['latin'] });
 
+function resolveLocaleFromHeaders(headerList: Headers): Locale {
+  const requestUrl = headerList.get('x-middleware-request-url');
+
+  if (!requestUrl) {
+    return defaultLocale;
+  }
+
+  try {
+    const { pathname } = new URL(requestUrl);
+    const [potentialLocale] = pathname.split('/').filter(Boolean);
+
+    if (locales.includes(potentialLocale as Locale)) {
+      return potentialLocale as Locale;
+    }
+  } catch (error) {
+    console.warn('Unable to resolve locale from request URL', error);
+  }
+
+  return defaultLocale;
+}
+
 export default function RootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const headerList = headers();
+  const locale = resolveLocaleFromHeaders(headerList);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`bg-white dark:bg-gray-950 text-black dark:text-white ${manrope.className}`}
     >
-      <body className="min-h-[100dvh] bg-gray-50">
-        <SWRConfig
-          value={{
-            fallback: {
-              // We do NOT await here
-              // Only components that read this data will suspend
-              '/api/user': getUser(),
-              '/api/team': getTeamForUser()
-            }
-          }}
-        >
-          {children}
-        </SWRConfig>
+      <body className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950">
+        {children}
       </body>
     </html>
   );
